@@ -86,6 +86,7 @@ collection = db["investor_preferences"]
 class InvestorPreference(BaseModel):
     company_name: str = ""
     investment_amount: str
+    risk_tolerance: int = 5  # 1–10 scale
     climate_concerns: list[str]
     location: str
 
@@ -100,6 +101,7 @@ def submit_preferences(data: InvestorPreference):
     document = {
         "company_name": data.company_name,
         "investment_amount": data.investment_amount,
+        "risk_tolerance": data.risk_tolerance,
         "climate_concerns": data.climate_concerns,
         "location": data.location,
         "created_at": datetime.utcnow(),
