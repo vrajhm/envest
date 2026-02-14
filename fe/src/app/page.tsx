@@ -22,7 +22,7 @@ export default function Home() {
       className="min-h-screen w-full relative flex items-center justify-center"
       style={{ background: "#0f240e" }}
     >
-      {/* Placeholder button, only visible after animation */}
+      {/* Map button, only visible after animation */}
       {animateUp && (
         <button
           className="px-8 py-4 rounded-lg bg-white text-green-900 text-xl font-bold shadow-lg transition hover:bg-green-100 z-10"
@@ -32,9 +32,9 @@ export default function Home() {
             left: "50%",
             transform: "translate(-50%, -50%)",
           }}
-          onClick={() => router.push("/dashboard")}
+          onClick={() => router.push("/map")}
         >
-          to dashboard (placeholder)
+          Pollution Map
         </button>
       )}
       {/* Animated landing overlay (beige paper) */}
