@@ -1,7 +1,17 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 
-from app.api.dependencies import get_chat_service, get_session_service
-from app.models.schemas import ChatRequest, ChatResponse, SessionRecord, SessionStartRequest, SessionStartResponse
+from app.api.dependencies import get_chat_service, get_cleanup_service, get_session_service
+from app.models.schemas import (
+    ChatRequest,
+    ChatResponse,
+    CleanupGenerateRequest,
+    CleanupGenerateResponse,
+    SessionArtifactsResponse,
+    SessionRecord,
+    SessionStartRequest,
+    SessionStartResponse,
+)
+from app.services.cleanup_service import CleanupService
 from app.services.chat_service import ChatService
 from app.services.session_service import SessionConflictError, SessionNotFoundError, SessionService
 
@@ -42,5 +52,30 @@ async def chat_in_session(
 ) -> ChatResponse:
     try:
         return await chat_service.chat(session_id=session_id, request=request)
+    except SessionNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+
+@router.post("/sessions/{session_id}/cleanup/generate", response_model=CleanupGenerateResponse)
+async def generate_cleanup(
+    session_id: str,
+    request: CleanupGenerateRequest,
+    cleanup_service: CleanupService = Depends(get_cleanup_service),
+) -> CleanupGenerateResponse:
+    try:
+        return await cleanup_service.generate_cleanup(session_id=session_id, request=request)
+    except SessionNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+@router.get("/sessions/{session_id}/artifacts", response_model=SessionArtifactsResponse)
+async def get_artifacts(
+    session_id: str,
+    cleanup_service: CleanupService = Depends(get_cleanup_service),
+) -> SessionArtifactsResponse:
+    try:
+        return await cleanup_service.get_artifacts(session_id=session_id)
     except SessionNotFoundError as exc:
         raise HTTPException(status_code=404, detail=str(exc)) from exc

@@ -100,12 +100,47 @@ Validation:
 - Compile checks passed.
 - Test suite passed (`4 passed`) after preflight changes.
 
+## Step 4 Completed: Cleanup Generation + Artifact Retrieval
+
+Implemented:
+- Added cleanup generation service in `be/app/services/cleanup_service.py`.
+- Added cleanup endpoint:
+  - `POST /v1/reviews/sessions/{session_id}/cleanup/generate`
+- Added artifact retrieval endpoint:
+  - `GET /v1/reviews/sessions/{session_id}/artifacts`
+- Added cleanup/artifact schemas:
+  - `CleanupGenerateRequest`
+  - `CleanupGenerateResponse`
+  - `SessionArtifactsResponse`
+- Cleanup flow now:
+  - loads session state
+  - uses accepted issue instructions (fallback to suggested changes when needed)
+  - generates revised document text via Gemini (with fallback behavior)
+  - generates plain-text investor email via Gemini (with fallback behavior)
+  - saves artifacts locally under `be/artifacts/{session_id}/`:
+    - `revised_document.txt`
+    - `revised_document.pdf`
+    - `investor_email.txt`
+  - persists artifact paths in `review_sessions`
+  - marks session status as `completed`
+- Added PDF generation using `reportlab` with simple line wrapping/pagination.
+- Wired `CleanupService` into dependency container and API dependency injection.
+- Updated `be/README.md` endpoint list for cleanup/artifacts.
+- Added endpoint tests:
+  - `be/tests/test_cleanup.py`
+
+Validation:
+- Compile checks passed.
+- Test suite passed with cleanup endpoints included (`6 passed`).
+
 ## Current Implemented API Surface
 
 - `GET /health`
 - `POST /v1/reviews/sessions/{session_id}/start`
 - `GET /v1/reviews/sessions/{session_id}`
 - `POST /v1/reviews/sessions/{session_id}/chat`
+- `POST /v1/reviews/sessions/{session_id}/cleanup/generate`
+- `GET /v1/reviews/sessions/{session_id}/artifacts`
 
 ## Notes
 
@@ -116,9 +151,6 @@ Validation:
 
 ## Next Planned Step
 
-- Implement cleanup generation endpoint and artifacts:
-  - `POST /v1/reviews/sessions/{session_id}/cleanup/generate`
-  - `GET /v1/reviews/sessions/{session_id}/artifacts`
-- Generate and persist:
-  - revised document PDF under `be/artifacts/{session_id}/`
-  - plain-text investor email summary
+- Replace deterministic embedding placeholder with real embedding provider integration.
+- Add real end-to-end demo script/cURL sequence in `be/README.md` (start -> chat -> cleanup -> artifacts).
+- Add one integration test path that exercises real cleanup artifact creation on local disk.

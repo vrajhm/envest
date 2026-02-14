@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
+from pathlib import Path
 from typing import Literal
 
 from pydantic import BaseModel, Field
@@ -86,3 +87,30 @@ class ChatResponse(BaseModel):
     citations: list[str] = Field(default_factory=list)
     inferred_updates: list[IssueStatusUpdate] = Field(default_factory=list)
     pending_resolution_issue_id: str | None = None
+
+
+class CleanupGenerateRequest(BaseModel):
+    confirmed: bool = True
+    investor_note: str | None = None
+
+
+class CleanupGenerateResponse(BaseModel):
+    session_id: str
+    status: Literal["completed"]
+    artifact_paths: dict[str, str]
+    unresolved_issue_ids: list[str] = Field(default_factory=list)
+    change_log: list[str] = Field(default_factory=list)
+
+
+class SessionArtifactsResponse(BaseModel):
+    session_id: str
+    artifact_paths: dict[str, str]
+    existing_artifacts: dict[str, bool]
+
+    @classmethod
+    def from_paths(cls, session_id: str, paths: dict[str, str]) -> "SessionArtifactsResponse":
+        return cls(
+            session_id=session_id,
+            artifact_paths=paths,
+            existing_artifacts={name: Path(path).exists() for name, path in paths.items()},
+        )

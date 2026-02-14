@@ -23,3 +23,5 @@
 - `POST /v1/reviews/sessions/{session_id}/start`
 - `GET /v1/reviews/sessions/{session_id}`
 - `POST /v1/reviews/sessions/{session_id}/chat`
+- `POST /v1/reviews/sessions/{session_id}/cleanup/generate`
+- `GET /v1/reviews/sessions/{session_id}/artifacts`
