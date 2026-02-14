@@ -133,6 +133,37 @@ Validation:
 - Compile checks passed.
 - Test suite passed with cleanup endpoints included (`6 passed`).
 
+## Step 5 Completed: Real Embedding Provider + Demo Runbook
+
+Implemented:
+- Replaced deterministic-only embedding flow with Google AI Studio embedding integration in `be/app/services/embeddings.py`.
+- Added real embedding call path using:
+  - model from env (`EMBEDDING_MODEL`, default `text-embedding-004`)
+  - output dimensionality from env (`EMBEDDING_DIM`, default `768`)
+- Kept deterministic fallback behavior when:
+  - `google-genai` is unavailable
+  - `GEMINI_API_KEY` is missing
+  - provider request fails
+- Added embedding readiness metadata to `GET /health`:
+  - `embedding_configured`
+  - `embedding_model`
+  - `details.embedding_last_error`
+- Added startup preflight log line for embedding provider status.
+- Added service-level integration test for local artifact generation:
+  - `be/tests/test_cleanup_service_integration.py`
+  - validates PDF/text/email files are created under local artifacts directory
+  - validates session artifact paths/status are persisted
+- Expanded `be/README.md` with a full cURL demo flow:
+  - preflight health check
+  - session start
+  - chat edit loop
+  - cleanup generation
+  - artifact retrieval
+
+Validation:
+- Compile checks passed.
+- Test suite passed with integration test included (`7 passed`).
+
 ## Current Implemented API Surface
 
 - `GET /health`
@@ -144,13 +175,12 @@ Validation:
 
 ## Notes
 
-- Embeddings currently use a deterministic placeholder implementation for plumbing.
+- Embeddings use Google AI Studio when configured, with deterministic fallback when unavailable.
 - Gemini service falls back to a local response if API key/client is unavailable.
 - VectorDB runtime requires the Actian client wheel to be installed:
   - `pip install ./actiancortex-0.1.0b1-py3-none-any.whl`
 
 ## Next Planned Step
 
-- Replace deterministic embedding placeholder with real embedding provider integration.
-- Add real end-to-end demo script/cURL sequence in `be/README.md` (start -> chat -> cleanup -> artifacts).
-- Add one integration test path that exercises real cleanup artifact creation on local disk.
+- Run end-to-end against a live VectorDB + real Gemini key and capture a demo transcript.
+- Add optional manual PATCH endpoint for issue status override (`/nitpicks/{issue_id}`) if needed for UI controls.

@@ -25,6 +25,11 @@ async def lifespan(app: FastAPI):
     except Exception as exc:  # pragma: no cover
         logger.warning("Vector store startup check failed: %s", exc)
 
+    if services.embeddings.configured:
+        logger.info("Embeddings preflight: configured model=%s", services.embeddings.model)
+    else:
+        logger.warning("Embeddings preflight: fallback mode (%s)", services.embeddings.last_error)
+
     if services.gemini_service.configured:
         logger.info("Gemini preflight: configured model=%s", services.gemini_service.model)
     else:

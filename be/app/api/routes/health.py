@@ -13,11 +13,14 @@ async def health(request: Request) -> HealthResponse:
             status="ok",
             vector_db="not_initialized",
             vector_client_installed=False,
+            embedding_configured=False,
+            embedding_model="unknown",
             gemini_configured=False,
             gemini_model="unknown",
             details={},
         )
     vector_store = services.vector_store
+    embeddings = services.embeddings
     gemini = services.gemini_service
 
     reachable, _ = await vector_store.ping()
@@ -34,10 +37,13 @@ async def health(request: Request) -> HealthResponse:
         status="ok",
         vector_db=vector_state,
         vector_client_installed=vector_store.client_installed,
+        embedding_configured=embeddings.configured,
+        embedding_model=embeddings.model,
         gemini_configured=gemini.configured,
         gemini_model=gemini.model,
         details={
             "vector_last_error": vector_store.last_error or "",
+            "embedding_last_error": embeddings.last_error or "",
             "gemini_last_error": gemini.last_error or "",
         },
     )

@@ -11,6 +11,8 @@ def test_health_endpoint() -> None:
     assert payload["status"] == "ok"
     assert payload["vector_db"] in {"connected", "not_connected", "not_initialized", "client_missing", "unreachable"}
     assert isinstance(payload["vector_client_installed"], bool)
+    assert isinstance(payload["embedding_configured"], bool)
+    assert isinstance(payload["embedding_model"], str)
     assert isinstance(payload["gemini_configured"], bool)
     assert isinstance(payload["gemini_model"], str)
     assert isinstance(payload["details"], dict)
