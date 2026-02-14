@@ -10,11 +10,17 @@ load_dotenv()
 
 app = FastAPI()
 
-# Allow frontend
+# Allow frontend (include common dev origins so preflight OPTIONS succeeds)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
-    allow_methods=["*"],
+    allow_origins=[
+        "http://localhost:3000",
+        "http://localhost:3001",
+        "http://127.0.0.1:3000",
+        "http://127.0.0.1:3001",
+    ],
+    allow_credentials=False,
+    allow_methods=["GET", "POST", "OPTIONS", "PUT", "DELETE"],
     allow_headers=["*"],
 )
 
@@ -35,6 +41,10 @@ class InvestorPreference(BaseModel):
 # -------------------------
 # Routes
 # -------------------------
+@app.options("/submit-preferences")
+def submit_preferences_options():
+    return {}
+
 @app.post("/submit-preferences")
 def submit_preferences(data: InvestorPreference):
     document = {
