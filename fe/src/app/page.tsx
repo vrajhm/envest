@@ -9,6 +9,7 @@ export default function Home() {
   const [showText, setShowText] = useState(false);
   const [animateUp, setAnimateUp] = useState(false);
   const [tabAnimateUp, setTabAnimateUp] = useState(false);
+  const [showBgImage, setShowBgImage] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -18,28 +19,99 @@ export default function Home() {
     setTimeout(() => setAnimateUp(true), 2400);
     // Animate tab upward after main animation completes
     setTimeout(() => setTabAnimateUp(true), 3800);
+    // Fade in background image after animation completes
+    setTimeout(() => setShowBgImage(true), 2600);
   }, []);
 
   return (
     <div
       className="min-h-screen w-full relative flex items-center justify-center"
-      style={{ background: "#0f240e" }}
+      style={{ background: "#0f240e", overflow: "hidden" }}
     >
-      {/* Placeholder button, only visible after animation */}
+      {/* Background image at the back */}
+      <div
+        style={{
+          position: "fixed",
+          inset: 0,
+          zIndex: 0,
+          backgroundImage: 'url("/background.png")',
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+        }}
+      />
+      {/* Muting overlay above background image */}
+      <div
+        style={{
+          position: "fixed",
+          inset: 0,
+          zIndex: 0.5,
+          background: "rgba(24, 36, 20, 0.62)",
+          pointerEvents: "none",
+        }}
+      />
+      {/* Vertical gradient mask from green to transparent */}
+      <div
+        style={{
+          position: "fixed",
+          inset: -20,
+          zIndex: 2,
+          pointerEvents: "none",
+          background:
+            "linear-gradient(to bottom, rgb(56, 58, 45) 0%, rgb(56, 58, 45) 2%, rgba(56,58,45,0.7) 8%, rgba(56,58,45,0.0) 20%, rgba(56,58,45,0.0) 80%, rgba(56,58,45,0.7) 92%, rgb(56, 58, 45) 98%, rgb(56, 58, 45) 100%)",
+        }}
+      />
+      {/* Large centered Playfair Display text after animation */}
+      {/* Large centered Playfair Display text after animation */}
       {animateUp && (
         <button
-          className="px-8 py-4 rounded-lg bg-white text-green-900 text-xl font-bold shadow-lg transition hover:bg-green-100 z-10"
+          onClick={() => router.push("/dashboard")}
           style={{
             position: "absolute",
             top: "50%",
             left: "50%",
-            transform: "translate(-50%, -50%)",
+            zIndex: 10,
+            textAlign: "center",
+            width: "100vw",
+            background: "none",
+            border: "none",
+            padding: 0,
+            cursor: "pointer",
+            animation: "pulse 4s ease-in-out infinite",
           }}
-          onClick={() => router.push("/dashboard")}
         >
-          to dashboard (placeholder)
+          <span
+            style={{
+              fontFamily: "Playfair Display, serif",
+              fontWeight: 700,
+              fontStyle: "italic",
+              fontSize: "6.5rem",
+              color: "rgb(237, 243, 189)",
+              letterSpacing: "-0.08em",
+              display: "block",
+              marginLeft: "-4vw",
+              lineHeight: 1,
+            }}
+          >
+            conscious
+          </span>
+          <span
+            style={{
+              fontFamily: "Playfair Display, serif",
+              fontWeight: 400,
+              fontStyle: "normal",
+              fontSize: "6rem",
+              color: "rgb(237, 243, 189)",
+              letterSpacing: "-0.03em",
+              display: "block",
+              marginRight: "-10.5vw",
+              lineHeight: 1,
+              marginTop: "-1.7rem",
+            }}
+          >
+            investing
+          </span>
         </button>
-      )}
+      )}{" "}
       {/* Animated landing overlay (beige paper) */}
       <div
         className="flex min-h-screen items-center justify-center font-sans relative"
