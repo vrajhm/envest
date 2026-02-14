@@ -28,6 +28,24 @@ export default function Home() {
       className="min-h-screen w-full relative flex items-center justify-center"
       style={{ background: "#0f240e", overflow: "hidden" }}
     >
+      {/* Small header top left */}
+      <div
+        style={{
+          position: "fixed",
+          top: 24,
+          left: 32,
+          zIndex: 3,
+          fontFamily: "Playfair Display, serif",
+          fontWeight: 300,
+          fontSize: "1.35rem",
+          color: "rgb(237, 243, 189)",
+          letterSpacing: "0.1em",
+          textShadow: "0 2px 8px #222a1a, 0 0 1px #222a1a",
+          userSelect: "none",
+        }}
+      >
+        envest
+      </div>
       {/* Background image at the back */}
       <div
         style={{
@@ -67,16 +85,13 @@ export default function Home() {
           onClick={() => router.push("/dashboard")}
           style={{
             position: "absolute",
-            top: "50%",
-            left: "50%",
-            zIndex: 10,
             textAlign: "center",
             width: "100vw",
             background: "none",
             border: "none",
             padding: 0,
             cursor: "pointer",
-            animation: "pulse 4s ease-in-out infinite",
+            animation: "pulse 4s ease-in-out infinite 1.2s",
           }}
         >
           <span
@@ -111,7 +126,26 @@ export default function Home() {
             investing
           </span>
         </button>
-      )}{" "}
+      )}
+      <span
+        style={{
+          position: "absolute",
+          top: "calc(50% + 140px)",
+          left: "50%",
+          transform: "translateX(-50%)",
+          display: "block",
+          fontFamily: "Montserrat, sans-serif",
+          fontWeight: 500,
+          fontSize: "0.9rem",
+          color: "rgb(237, 243, 189)",
+          letterSpacing: "0.05em",
+          opacity: 0.85,
+          textShadow: "0 1px 6px #222a1a",
+          zIndex: 10,
+        }}
+      >
+        get started ↑
+      </span>
       {/* Animated landing overlay (beige paper) */}
       <div
         className="flex min-h-screen items-center justify-center font-sans relative"
