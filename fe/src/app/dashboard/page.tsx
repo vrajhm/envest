@@ -1,5 +1,6 @@
 "use client";
 import Image from "next/image";
+import Link from "next/link";
 
 export default function Dashboard() {
   return (
@@ -18,6 +19,14 @@ export default function Dashboard() {
         />
       </div>
       <div className="relative z-10 max-w-5xl mx-auto">
+        <div className="mb-6 flex justify-end">
+          <Link
+            href="/chat"
+            className="rounded-lg bg-green-900 px-4 py-2 text-sm font-semibold text-white shadow hover:bg-green-800"
+          >
+            Open RAG Chat
+          </Link>
+        </div>
         {/* 2x2 Cards Grid */}
         <div className="grid grid-cols-2 gap-6 mb-10">
           {[1, 2, 3, 4].map((i) => (
