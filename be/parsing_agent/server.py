@@ -84,16 +84,18 @@ class ScoreBody(BaseModel):
     top_k: int | None = None
 
 
-SCORE_PROMPT_TEMPLATE = """You are evaluating a climate contract between a startup and an investor. Your task is to score how well the contract's language, commitments, and syntax align with what the investor cares about.
+SCORE_PROMPT_TEMPLATE = """You are evaluating an ESG report. Your task is to (1) score how well the report's language, commitments, and syntax align with the investor priorities below, and (2) identify vulnerable clauses in the document—vague language, loopholes, weak commitments, or greenwashing-like wording—and score each for exploitability.
 
-Relevant excerpts from the contract (these are the only parts you should use):
+Use your knowledge of famous ESG reports and controversies. When you know of a similar clause from a real company's ESG report that was criticized or exploited, include it in similar_bad_examples for that vulnerable clause. If you have no such example, leave similar_bad_examples as an empty array. No external search is used; rely on your own knowledge.
+
+Relevant excerpts from the document (these are the only parts you should use):
 
 {chunks_text}
 
 Investor priorities (what they care about):
 {goals_text}
 
-Score the contract on how legitimate and aligned it seems given these priorities. Focus on clarity of commitments, specificity, and whether the wording supports the stated climate goals. Output only valid JSON with no other text. Use this exact structure:
+Output only valid JSON with no other text. Use this exact structure:
 
 {{
   "overall_trust_score": <number 0-100>,
@@ -101,8 +103,22 @@ Score the contract on how legitimate and aligned it seems given these priorities
     {{ "goal": "<goal text>", "score": <0-100>, "notes": "<short note>" }},
     ...
   ],
-  "syntax_notes": "<short overall note on contract language and legitimacy>"
+  "syntax_notes": "<short overall note on document language and legitimacy>",
+  "vulnerable_clauses": [
+    {{
+      "clause_text": "<excerpt from the document>",
+      "vulnerability_score": <number 0-100, higher = more exploitable>,
+      "notes": "<optional short note>",
+      "similar_bad_examples": [
+        {{ "example_clause": "<clause from a known ESG report>", "source": "<e.g. Company X 2022 ESG report>" }},
+        ...
+      ]
+    }},
+    ...
+  ]
 }}
+
+For each vulnerable clause: assign vulnerability_score 0-100 (higher = more exploitable or similar to known-bad patterns). similar_bad_examples must be an array of objects with example_clause and source; use [] when you have no known example.
 """
 
 
@@ -206,6 +222,14 @@ async def score_contract(body: ScoreBody):
         response = llm.complete(prompt)
         raw_text = (getattr(response, "text", None) or str(response)).strip()
         result = _parse_llm_json(raw_text)
+        # Normalize: ensure vulnerable_clauses exists and each has similar_bad_examples
+        if "vulnerable_clauses" not in result or not isinstance(result["vulnerable_clauses"], list):
+            result["vulnerable_clauses"] = []
+        for clause in result["vulnerable_clauses"]:
+            if not isinstance(clause, dict):
+                continue
+            if "similar_bad_examples" not in clause or not isinstance(clause["similar_bad_examples"], list):
+                clause["similar_bad_examples"] = []
         return result
     except json.JSONDecodeError as e:
         raise HTTPException(status_code=502, detail=f"LLM did not return valid JSON: {e!s}")
