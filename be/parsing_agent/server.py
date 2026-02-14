@@ -7,6 +7,7 @@ import json
 import logging
 import os
 import re
+from datetime import datetime
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -17,6 +18,7 @@ from llama_cloud import AsyncLlamaCloud
 from llama_index.core import Document, VectorStoreIndex, Settings
 from llama_index.embeddings.google_genai import GoogleGenAIEmbedding
 from llama_index.llms.google_genai import GoogleGenAI
+from motor.motor_asyncio import AsyncIOMotorClient
 from pydantic import BaseModel
 import uvicorn
 
@@ -35,6 +37,37 @@ app.add_middleware(
     allow_headers=["*"],
 )
 logger = logging.getLogger("parsing_agent")
+
+# MongoDB connection
+mongo_client = AsyncIOMotorClient(
+    os.getenv("MONGO_URI"),
+    tls=True,
+    tlsAllowInvalidCertificates=True
+)
+db = mongo_client["climate_investor_db"]
+investor_collection = db["investor_preferences"]
+
+# Cached test investor
+_test_investor = None
+
+
+async def _get_test_investor():
+    """Get the test investor from MongoDB, caching in memory."""
+    global _test_investor
+    if _test_investor is None:
+        _test_investor = await investor_collection.find_one({"_id": "test_user"})
+    return _test_investor
+
+
+@app.post("/investor/refresh")
+async def refresh_investor():
+    """Refresh the cached test investor from MongoDB."""
+    global _test_investor
+    _test_investor = None
+    investor = await _get_test_investor()
+    if not investor:
+        return {"ok": False, "error": "test_user not found"}
+    return {"ok": True, "investor": investor.get("company_name", "Unknown")}
 
 # In-memory state: last parsed markdown and vector index (for retrieval only)
 _last_markdown: str | None = None
@@ -129,9 +162,9 @@ def _extract_markdown(result) -> tuple[str, str]:
     return "", "none"
 
 
-# Request body for /score (validation only; response is raw JSON from LLM)
+# Score request body (optional for future use)
 class ScoreBody(BaseModel):
-    investor_goals: list[str]
+    investor_goals: list[str] | None = None
     top_k: int | None = None
 
 
@@ -316,7 +349,7 @@ async def parse_document(file: UploadFile | None = File(None)):
         content = await file.read()
         path.write_bytes(content)
     else:
-        path = Path(__file__).resolve().parent / "ESG Report.pdf"
+        path = Path(__file__).resolve().parent / "ESG_Report_2024.docx"
         if not path.is_file():
             raise HTTPException(status_code=400, detail=f"File not found: {path}")
 
@@ -376,10 +409,10 @@ async def parse_document(file: UploadFile | None = File(None)):
     return markdown
 
 
-@app.post("/score")
-async def score_contract(body: ScoreBody):
+@app.get("/score")
+async def score_contract():
     """
-    Score the last parsed contract against investor goals.
+    Score the last parsed contract against investor goals from MongoDB.
     Uses one retrieval over the document (top-k chunks for all goals), then an LLM to produce a trust score.
     Requires GOOGLE_API_KEY. Call POST /parse first.
     """
@@ -388,12 +421,24 @@ async def score_contract(body: ScoreBody):
             status_code=400,
             detail="No document parsed yet. Call POST /parse first.",
         )
-    if not body.investor_goals:
-        raise HTTPException(status_code=400, detail="investor_goals must be a non-empty list.")
+    
+    # Always get investor goals from MongoDB
+    investor = await _get_test_investor()
+    if not investor:
+        raise HTTPException(
+            status_code=400,
+            detail="test_user not found in MongoDB.",
+        )
+    investor_goals = investor.get("climate_concerns", [])
+    if not investor_goals:
+        raise HTTPException(
+            status_code=400,
+            detail="Test user has no climate_concerns configured in MongoDB.",
+        )
 
-    top_k = body.top_k if body.top_k is not None else DEFAULT_TOP_K
+    top_k = DEFAULT_TOP_K
     # One retrieval query summarizing all goals
-    retrieval_query = "Climate and sustainability commitments, emissions, water usage, environmental obligations, goals and standards: " + " ".join(body.investor_goals)
+    retrieval_query = "Climate and sustainability commitments, emissions, water usage, environmental obligations, goals and standards: " + " ".join(investor_goals)
 
     chunks = _retrieve_chunks(retrieval_query, top_k)
     if not chunks:
@@ -414,7 +459,7 @@ async def score_contract(body: ScoreBody):
         )
 
     chunks_text = "\n\n---\n\n".join(chunks)
-    goals_text = "\n".join(f"- {g}" for g in body.investor_goals)
+    goals_text = "\n".join(f"- {g}" for g in investor_goals)
     prompt = SCORE_PROMPT_TEMPLATE.format(chunks_text=chunks_text, goals_text=goals_text)
 
     try:
@@ -436,12 +481,29 @@ async def score_contract(body: ScoreBody):
         raise HTTPException(status_code=502, detail=f"Score error: {e!s}")
 
 
+@app.get("/investor")
+async def get_investor():
+    """Get the current test investor details."""
+    investor = await _get_test_investor()
+    if not investor:
+        return {"ok": False, "error": "test_user not found in MongoDB"}
+    # Convert ObjectId to string for JSON response
+    investor["_id"] = str(investor.get("_id", ""))
+    # Convert datetime to string if present
+    if investor.get("created_at"):
+        investor["created_at"] = investor["created_at"].isoformat()
+    if investor.get("updated_at"):
+        investor["updated_at"] = investor["updated_at"].isoformat()
+    return {"ok": True, "investor": investor}
+
+
 @app.get("/health")
 def health():
     return {
         "ok": True,
         "llama_configured": bool(LLAMA_API_KEY),
         "google_configured": bool(os.getenv("GOOGLE_API_KEY")),
+        "mongo_configured": bool(os.getenv("MONGO_URI")),
     }
 
 
