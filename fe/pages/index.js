@@ -32,7 +32,7 @@ export default function HeatmapPage() {
 
       const map = new mapboxgl.Map({
         container: mapContainerRef.current,
-        style: "mapbox://styles/mapbox/streets-v11",
+        style: "mapbox://styles/mapbox/light-v11",
         center: [-122.4194, 37.7749],
         zoom: 2,
       });
@@ -55,15 +55,15 @@ export default function HeatmapPage() {
               ["linear"],
               ["heatmap-density"],
               0,
-              "rgba(0, 255, 0, 0)",
-              0.2,
-              "rgba(0, 255, 127, 0.5)",
-              0.4,
-              "rgba(255, 255, 0, 0.6)",
-              0.6,
-              "rgba(255, 165, 0, 0.7)",
+              "rgba(245, 245, 220, 0)",
+              0.25,
+              "rgba(245, 245, 220, 0.5)",
+              0.5,
+              "rgba(127, 149, 117, 0.6)",
+              0.75,
+              "rgba(63, 113, 75, 0.75)",
               1,
-              "rgba(255, 0, 0, 0.9)",
+              "rgba(63, 113, 75, 0.9)",
             ],
           },
         });
@@ -126,7 +126,7 @@ export default function HeatmapPage() {
   }
 
   return (
-    <div style={{ display: "flex", height: "100vh", width: "100%" }}>
+    <div style={{ display: "flex", height: "100vh", width: "100%", background: "#F5F5DC" }}>
       <div
         ref={mapContainerRef}
         style={{ flex: 1, minHeight: 0, minWidth: 0 }}
@@ -134,13 +134,15 @@ export default function HeatmapPage() {
       <div
         style={{
           flex: "0 0 280px",
-          padding: "1rem",
-          borderLeft: "1px solid #ccc",
-          background: "#f7f7f7",
+          padding: "1.5rem",
+          borderLeft: "1px solid rgba(63, 113, 75, 0.3)",
+          background: "#F5F5DC",
           overflow: "auto",
+          fontFamily: "system-ui, -apple-system, sans-serif",
+          color: "#3F714B",
         }}
       >
-        <h3 style={{ marginTop: 0 }}>Air quality (OpenAQ)</h3>
+        <h3 style={{ marginTop: 0, fontWeight: 600, letterSpacing: "-0.02em" }}>Air quality (OpenAQ)</h3>
         {!data && <p>Loading…</p>}
         {data && hoverInfo ? (
           <>
