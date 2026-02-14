@@ -41,6 +41,9 @@ out/
 .nuxt/
 .cache/
 
+# Parsing server uploads
+.tmp_uploads/
+
 # Logs & temp
 *.log
 npm-debug.log*
