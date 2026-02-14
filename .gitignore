@@ -49,6 +49,7 @@ yarn-error.log*
 .temp/
 tmp/
 temp/
+be/uploads/
 
 # Env and secrets (never commit real keys)
 .env
