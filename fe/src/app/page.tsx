@@ -7,14 +7,17 @@ export default function Home() {
   const [showLeaf1, setShowLeaf1] = useState(false);
   const [showLeaf2, setShowLeaf2] = useState(false);
   const [showText, setShowText] = useState(false);
-  const [animateUp, setAnimateUp] = useState(false); // State to control upward animation
+  const [animateUp, setAnimateUp] = useState(false);
+  const [tabAnimateUp, setTabAnimateUp] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
     setTimeout(() => setShowLeaf1(true), 200);
     setTimeout(() => setShowLeaf2(true), 800);
     setTimeout(() => setShowText(true), 1500);
-    setTimeout(() => setAnimateUp(true), 2200);
+    setTimeout(() => setAnimateUp(true), 2400);
+    // Animate tab upward after main animation completes
+    setTimeout(() => setTabAnimateUp(true), 3800);
   }, []);
 
   return (
@@ -45,22 +48,21 @@ export default function Home() {
           inset: 0,
           zIndex: 10,
           background: "rgb(217, 205, 183)",
-          transition: "transform 1s cubic-bezier(0.77,0,0.175,1)",
+          transition: "transform 1.2s cubic-bezier(0.77,0,0.175,1)",
           transform: animateUp ? "translateY(-100%)" : "translateY(0)",
+          borderBottomLeftRadius: 24,
+          borderBottomRightRadius: 24,
         }}
       >
-        {/* Folder tab */}
+        {/* Reveal tab below indent */}
         <div
-          className="fixed bottom-0 right-0 z-20 pointer-events-none"
+          className={`fixed bottom-0 right-0 z-20 pointer-events-auto`}
           style={{
             width: 300,
-            height: 70,
-            background: "#b6a899",
+            height: 50,
+            background: "#9e8d75",
             borderRadius: "12px 0 0 0",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            marginTop: -1,
+            marginBottom: 0,
           }}
         >
           {/* Crinkle overlay for folder tab */}
@@ -94,6 +96,43 @@ export default function Home() {
               gap: 6,
             }}
           ></span>
+        </div>
+        {/* Folder tab revealed as beige moves up */}
+        {/* Show tab before and during animation, hide after animation completes */}
+        <div
+          className="fixed right-0 z-30 pointer-events-none"
+          style={{
+            width: 300,
+            height: 50,
+            background: "rgb(217, 205, 183)",
+            borderRadius: "0 0 12px 12px",
+            display: "flex",
+            alignItems: "right",
+            justifyContent: "right",
+            top: tabAnimateUp ? "calc(100vh - 100px)" : "100vh",
+            transition: "top 0.5s cubic-bezier(0.77,0,0.175,1)", // match max velocity
+            boxShadow: "0 2px 8px rgba(20,54,17,0.08)",
+          }}
+        >
+          {/* Crinkle overlay for folder tab */}
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              pointerEvents: "none",
+              zIndex: 0,
+              borderRadius: "0 0 12px 12px",
+              overflow: "hidden",
+            }}
+          >
+            <Image
+              src="/crinkle.png"
+              alt="Crinkle overlay"
+              fill
+              style={{ objectFit: "cover", opacity: 0.2 }}
+              priority
+            />
+          </div>
         </div>
         {/* Crinkle overlay */}
         <div className="fixed inset-0 pointer-events-none z-0">
