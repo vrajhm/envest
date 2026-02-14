@@ -104,11 +104,10 @@ export default function AirQualityPage() {
             .setLngLat(feature.geometry.coordinates)
             .setHTML(`
               <div style="font-family: sans-serif;">
-                <h3>Air Pollution</h3>
+                <h3>Pollution Index</h3>
                 <p><strong>Severity:</strong> ${(props.severity * 100).toFixed(
                   1
                 )}%</p>
-                <p><strong>Category:</strong> ${props.category}</p>
               </div>
             `)
             .addTo(map);
