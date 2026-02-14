@@ -164,6 +164,35 @@ Validation:
 - Compile checks passed.
 - Test suite passed with integration test included (`7 passed`).
 
+## Step 6 Attempted: Live End-to-End Run Against Real Services
+
+Implemented/Executed:
+- Installed Actian client wheel into project venv.
+- Ran API with real `be/.env` configuration.
+- Executed live endpoint sequence:
+  - `GET /health`
+  - `POST /v1/reviews/sessions/{session_id}/start`
+  - `POST /v1/reviews/sessions/{session_id}/chat`
+  - `POST /v1/reviews/sessions/{session_id}/cleanup/generate`
+  - `GET /v1/reviews/sessions/{session_id}/artifacts`
+- Captured transcript in:
+  - `be/demo_transcript.md`
+
+Observed result:
+- `/health` responds and reports:
+  - vector client installed
+  - embeddings configured
+  - gemini configured
+  - `vector_db: unreachable`
+- All stateful endpoints currently fail with `500` because VectorDB gRPC calls fail with:
+  - `AioRpcError`
+  - `StatusCode.UNAVAILABLE`
+  - `ipv4:127.0.0.1:50051: FD shutdown`
+
+Status:
+- API implementation is complete for the planned flow.
+- Live E2E is blocked by current VectorDB runtime instability in this environment.
+
 ## Current Implemented API Surface
 
 - `GET /health`
@@ -182,5 +211,6 @@ Validation:
 
 ## Next Planned Step
 
-- Run end-to-end against a live VectorDB + real Gemini key and capture a demo transcript.
-- Add optional manual PATCH endpoint for issue status override (`/nitpicks/{issue_id}`) if needed for UI controls.
+- Stabilize/replace VectorDB runtime so gRPC operations (`health_check`, `get`, `upsert`) succeed.
+- Re-run live transcript to validate full success path (start -> chat -> cleanup -> artifacts).
+- Optional: add manual PATCH endpoint for issue status override (`/nitpicks/{issue_id}`) if needed for UI controls.
