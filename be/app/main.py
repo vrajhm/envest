@@ -1,3 +1,6 @@
+from contextlib import asynccontextmanager
+import logging
+
 from fastapi import FastAPI
 
 from app.api.router import api_router
@@ -7,18 +10,21 @@ from app.services.container import build_services
 
 settings = get_settings()
 configure_logging(settings.log_level)
+logger = logging.getLogger(__name__)
 
-app = FastAPI(title=settings.app_name)
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    services = build_services()
+    app.state.services = services
+    try:
+        await services.vector_store.connect()
+        await services.vector_store.ensure_collections()
+    except Exception as exc:  # pragma: no cover
+        logger.warning("Vector store startup check failed: %s", exc)
+    yield
+    await services.vector_store.close()
+
+
+app = FastAPI(title=settings.app_name, lifespan=lifespan)
 app.include_router(api_router)
-
-
-@app.on_event("startup")
-async def on_startup() -> None:
-    app.state.services = build_services()
-
-
-@app.on_event("shutdown")
-async def on_shutdown() -> None:
-    services = getattr(app.state, "services", None)
-    if services:
-        await services.vector_store.close()

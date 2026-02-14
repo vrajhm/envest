@@ -1,30 +1,84 @@
+from __future__ import annotations
+
+from datetime import datetime
+from typing import Literal
+
 from pydantic import BaseModel, Field
 
 
-class UploadDocumentResponse(BaseModel):
-    document_id: str
-    filename: str
+class DocumentChunkInput(BaseModel):
+    chunk_id: str
+    text: str
+    source_name: str
+    citations: list[str] = Field(default_factory=list)
+
+
+class NitpickIssueInput(BaseModel):
+    issue_id: str
+    title: str
+    severity: Literal["high", "medium", "low"]
+    status: Literal["open", "in_progress", "resolved"] = "open"
+    summary: str
+    citations: list[str] = Field(default_factory=list)
+    suggested_changes: list[str] = Field(default_factory=list)
+    accepted_change_instructions: str = ""
+
+
+class SessionStartRequest(BaseModel):
+    session_id: str
+    company_name: str
+    doc_id: str
+    doc_title: str
+    full_document_text: str
+    green_score: float = Field(ge=0, le=100)
+    document_chunks: list[DocumentChunkInput]
+    nitpicks: list[NitpickIssueInput]
+
+
+class SessionStartResponse(BaseModel):
+    session_id: str
+    status: Literal["created", "overwritten"]
+    chunk_count: int
+    nitpick_count: int
+    dropped_citation_count: int
+
+
+class SessionRecord(BaseModel):
+    session_id: str
+    company_name: str
+    doc_id: str
+    doc_title: str
+    full_document_text: str
+    green_score: float
+    status: Literal["active", "ready_for_cleanup", "completed"]
+    created_at: datetime
+    updated_at: datetime
+    chunk_ids: list[str]
+    nitpicks: list[NitpickIssueInput]
+    artifact_paths: dict[str, str] = Field(default_factory=dict)
+    pending_resolution_issue_id: str | None = None
+
+
+class HealthResponse(BaseModel):
     status: str
-    chunk_count: int = 0
-    char_count: int = 0
-    message: str | None = None
+    vector_db: str
 
 
 class ChatRequest(BaseModel):
-    tenant_id: str
-    user_id: str
-    doc_id: str
-    conversation_id: str
-    question: str = Field(min_length=3)
-    top_k: int = Field(default=8, ge=1, le=30)
+    message: str = Field(min_length=1)
+    conversation_id: str = "default"
+    issue_id: str | None = None
 
 
-class Citation(BaseModel):
-    chunk_id: str
-    quote: str | None = None
+class IssueStatusUpdate(BaseModel):
+    issue_id: str
+    previous_status: Literal["open", "in_progress", "resolved"]
+    new_status: Literal["open", "in_progress", "resolved"]
+    reason: str
 
 
 class ChatResponse(BaseModel):
     answer: str
-    citations: list[Citation]
-    confidence_0_100: int = Field(ge=0, le=100)
+    citations: list[str] = Field(default_factory=list)
+    inferred_updates: list[IssueStatusUpdate] = Field(default_factory=list)
+    pending_resolution_issue_id: str | None = None

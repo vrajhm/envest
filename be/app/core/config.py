@@ -4,28 +4,29 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    app_name: str = "Envest BE"
+    app_name: str = "Envest RAG API"
     app_env: str = "dev"
     app_host: str = "0.0.0.0"
     app_port: int = 8000
     log_level: str = "INFO"
 
-    database_url: str = "postgresql+psycopg://postgres:postgres@localhost:5432/envest"
     vector_db_address: str = "localhost:50051"
+    vector_collection_document_chunks: str = "document_chunks"
+    vector_collection_nitpick_issues: str = "nitpick_issues"
+    vector_collection_conversation_turns: str = "conversation_turns"
+    vector_collection_review_sessions: str = "review_sessions"
+    vector_distance_metric: str = "COSINE"
+    vector_hnsw_m: int = 16
+    vector_hnsw_ef_construct: int = 200
+    vector_hnsw_ef_search: int = 50
 
-    vector_doc_collection: str = "document_chunks"
-    vector_turn_collection: str = "conversation_turns"
-    embedding_dimension: int = 768
+    embedding_dim: int = 768
+    embedding_model: str = "text-embedding-004"
 
-    llm_provider: str = "openai"
-    llm_model: str = "gpt-4o-mini"
-    embedding_model: str = "text-embedding-3-small"
-    openai_api_key: str = ""
+    gemini_model: str = "gemini-3-flash"
+    gemini_api_key: str = ""
 
-    llama_parse_api_key: str = ""
-    upload_dir: str = "be/uploads"
-    chunk_size_chars: int = 3000
-    chunk_overlap_chars: int = 400
+    artifacts_dir: str = "be/artifacts"
 
     model_config = SettingsConfigDict(env_file="be/.env", env_file_encoding="utf-8", extra="ignore")
 

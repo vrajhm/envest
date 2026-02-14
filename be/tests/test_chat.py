@@ -1,0 +1,44 @@
+from fastapi.testclient import TestClient
+
+from app.api.dependencies import get_chat_service
+from app.main import app
+from app.models.schemas import ChatResponse, IssueStatusUpdate
+
+
+class FakeChatService:
+    async def chat(self, session_id: str, request):  # noqa: ANN001
+        return ChatResponse(
+            answer="Acknowledged. I marked this issue in progress and captured your edit request.",
+            citations=["doc_001:c001"],
+            inferred_updates=[
+                IssueStatusUpdate(
+                    issue_id=request.issue_id or "issue_001",
+                    previous_status="open",
+                    new_status="in_progress",
+                    reason="Investor requested edits.",
+                )
+            ],
+            pending_resolution_issue_id=request.issue_id or "issue_001",
+        )
+
+
+def test_chat_endpoint() -> None:
+    app.dependency_overrides[get_chat_service] = lambda: FakeChatService()
+    client = TestClient(app)
+
+    response = client.post(
+        "/v1/reviews/sessions/sess_001/chat",
+        json={
+            "conversation_id": "conv_001",
+            "issue_id": "issue_001",
+            "message": "Please add stricter annual reporting language for this issue.",
+        },
+    )
+
+    app.dependency_overrides.clear()
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["citations"] == ["doc_001:c001"]
+    assert payload["inferred_updates"][0]["new_status"] == "in_progress"
+    assert payload["pending_resolution_issue_id"] == "issue_001"
