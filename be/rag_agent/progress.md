@@ -117,7 +117,7 @@ Implemented:
   - uses accepted issue instructions (fallback to suggested changes when needed)
   - generates revised document text via Gemini (with fallback behavior)
   - generates plain-text investor email via Gemini (with fallback behavior)
-  - saves artifacts locally under `be/artifacts/{session_id}/`:
+  - saves artifacts locally under `be/rag_agent/artifacts/{session_id}/`:
     - `revised_document.txt`
     - `revised_document.pdf`
     - `investor_email.txt`
@@ -176,7 +176,7 @@ Implemented/Executed:
   - `POST /v1/reviews/sessions/{session_id}/cleanup/generate`
   - `GET /v1/reviews/sessions/{session_id}/artifacts`
 - Captured transcript in:
-  - `be/demo_transcript.md`
+  - `be/rag_agent/demo_transcript.md`
 - Added configurable backend mode to vector service:
   - `VECTOR_BACKEND=actian|memory`
   - `VECTOR_AUTO_FALLBACK_MEMORY=true|false`

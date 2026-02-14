@@ -28,7 +28,7 @@ class Settings(BaseSettings):
     gemini_model: str = "models/gemini-3-flash-preview"
     gemini_api_key: str = ""
 
-    artifacts_dir: str = "be/artifacts"
+    artifacts_dir: str = "be/rag_agent/artifacts"
 
     model_config = SettingsConfigDict(env_file="be/.env", env_file_encoding="utf-8", extra="ignore")
 

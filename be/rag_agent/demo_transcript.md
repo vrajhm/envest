@@ -58,7 +58,7 @@ HTTP/1.1 200 OK
 
 ```text
 HTTP/1.1 200 OK
-{"session_id":"sess_demo_live","status":"completed","artifact_paths":{"revised_text_path":"be/artifacts/sess_demo_live/revised_document.txt","revised_pdf_path":"be/artifacts/sess_demo_live/revised_document.pdf","investor_email_path":"be/artifacts/sess_demo_live/investor_email.txt"},"unresolved_issue_ids":["issue_001"],"change_log":[...]}
+{"session_id":"sess_demo_live","status":"completed","artifact_paths":{"revised_text_path":"be/rag_agent/artifacts/sess_demo_live/revised_document.txt","revised_pdf_path":"be/rag_agent/artifacts/sess_demo_live/revised_document.pdf","investor_email_path":"be/rag_agent/artifacts/sess_demo_live/investor_email.txt"},"unresolved_issue_ids":["issue_001"],"change_log":[...]}
 ```
 
 ### Artifacts

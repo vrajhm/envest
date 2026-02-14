@@ -16,9 +16,9 @@ class FakeCleanupService:
             session_id=session_id,
             status="completed",
             artifact_paths={
-                "revised_pdf_path": f"be/artifacts/{session_id}/revised_document.pdf",
-                "investor_email_path": f"be/artifacts/{session_id}/investor_email.txt",
-                "revised_text_path": f"be/artifacts/{session_id}/revised_document.txt",
+                "revised_pdf_path": f"be/rag_agent/artifacts/{session_id}/revised_document.pdf",
+                "investor_email_path": f"be/rag_agent/artifacts/{session_id}/investor_email.txt",
+                "revised_text_path": f"be/rag_agent/artifacts/{session_id}/revised_document.txt",
             },
             unresolved_clause_ids=["clause_009"],
             change_log=["Applied: clause_001 -> add annual disclosure clause"],
@@ -30,8 +30,8 @@ class FakeCleanupService:
         return SessionArtifactsResponse(
             session_id=session_id,
             artifact_paths={
-                "revised_pdf_path": f"be/artifacts/{session_id}/revised_document.pdf",
-                "investor_email_path": f"be/artifacts/{session_id}/investor_email.txt",
+                "revised_pdf_path": f"be/rag_agent/artifacts/{session_id}/revised_document.pdf",
+                "investor_email_path": f"be/rag_agent/artifacts/{session_id}/investor_email.txt",
             },
             existing_artifacts={
                 "revised_pdf_path": True,

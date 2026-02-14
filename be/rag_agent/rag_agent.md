@@ -110,7 +110,7 @@ Collections/backing groups used by the app:
 - `EMBEDDING_MODEL=models/gemini-embedding-001`
 - `GEMINI_MODEL=models/gemini-3-flash-preview`
 - `GEMINI_API_KEY=<Google AI Studio key>`
-- `ARTIFACTS_DIR=be/artifacts`
+- `ARTIFACTS_DIR=be/rag_agent/artifacts`
 
 ## Workflow
 1. Upstream calls session start with analysis schema.
@@ -119,9 +119,9 @@ Collections/backing groups used by the app:
 4. Agent infers status transitions and persists updates.
 5. Investor triggers cleanup generation.
 6. Agent writes:
-- `be/artifacts/{session_id}/revised_document.txt`
-- `be/artifacts/{session_id}/revised_document.pdf`
-- `be/artifacts/{session_id}/investor_email.txt`
+- `be/rag_agent/artifacts/{session_id}/revised_document.txt`
+- `be/rag_agent/artifacts/{session_id}/revised_document.pdf`
+- `be/rag_agent/artifacts/{session_id}/investor_email.txt`
 
 ## Current MVP Behavior
 - No hard requirement that all clauses be resolved before cleanup.

@@ -59,10 +59,10 @@
 ## Demo flow
 
 ```bash
-bash be/run_demo_flow.sh
+bash be/rag_agent/run_demo_flow.sh
 ```
 
 Artifacts are saved to:
-- `be/artifacts/{session_id}/revised_document.txt`
-- `be/artifacts/{session_id}/revised_document.pdf`
-- `be/artifacts/{session_id}/investor_email.txt`
+- `be/rag_agent/artifacts/{session_id}/revised_document.txt`
+- `be/rag_agent/artifacts/{session_id}/revised_document.pdf`
+- `be/rag_agent/artifacts/{session_id}/investor_email.txt`

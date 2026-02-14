@@ -1,0 +1,11 @@
+**Company:** Acme Climate Tech
+**Document:** Climate Contract v3 (Revised)
+
+---
+
+**CLIMATE CONTRACT**
+
+This is a sample contract text for live endpoint verification.
+
+**Section 1: Annual Reporting Obligations**
+The Company shall submit a comprehensive annual report to the Investor within forty-five (45) days of the close of each fiscal year. This report must include audited greenhouse gas (GHG) emissions data, specific progress updates regarding all climate-related milestones, and a detailed disclosure of resource allocation. All submitted data must be verified by an independent third-party auditor. Failure to provide this report within the specified timeframe, or failure to meet the required data standards, shall be deemed a material breach of this Agreement.
