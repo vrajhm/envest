@@ -62,6 +62,7 @@ class SessionRecord(BaseModel):
 
 class HealthResponse(BaseModel):
     status: str
+    vector_backend: str
     vector_db: str
     vector_client_installed: bool
     embedding_configured: bool

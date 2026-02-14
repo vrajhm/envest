@@ -11,6 +11,7 @@ async def health(request: Request) -> HealthResponse:
     if services is None:
         return HealthResponse(
             status="ok",
+            vector_backend="unknown",
             vector_db="not_initialized",
             vector_client_installed=False,
             embedding_configured=False,
@@ -24,7 +25,9 @@ async def health(request: Request) -> HealthResponse:
     gemini = services.gemini_service
 
     reachable, _ = await vector_store.ping()
-    if not vector_store.client_installed:
+    if vector_store.backend == "memory":
+        vector_state = "connected"
+    elif not vector_store.client_installed:
         vector_state = "client_missing"
     elif not vector_store.connected:
         vector_state = "not_connected"
@@ -35,6 +38,7 @@ async def health(request: Request) -> HealthResponse:
 
     return HealthResponse(
         status="ok",
+        vector_backend=vector_store.backend,
         vector_db=vector_state,
         vector_client_installed=vector_store.client_installed,
         embedding_configured=embeddings.configured,

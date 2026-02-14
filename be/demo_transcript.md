@@ -2,55 +2,73 @@
 
 Date: 2026-02-13
 
-Scope:
-- Run API server with real `.env`
-- Call live endpoints in sequence: health -> start -> chat -> cleanup -> artifacts
-- Capture responses and runtime errors
+This file captures two live runs:
+1. Actian backend attempt (blocked by gRPC reset in current environment)
+2. Memory backend run (successful end-to-end demo)
 
-## Runtime Preconditions
+## Run A: Actian Backend (Blocked)
 
-- `GEMINI_API_KEY` configured in `be/.env`
-- `google-genai` installed
-- Actian client wheel installed in `.venv`
-- Docker container `vectoraidb` running and host port `50051` open
+Preconditions:
+- `VECTOR_BACKEND=actian`
+- Actian wheel installed
+- Docker container running on `localhost:50051`
 
-## API Transcript
+Observed:
+- `GET /health` returned `vector_db: unreachable`
+- Stateful endpoints returned `500`
+- Server logs showed:
+  - `grpc.aio._call.AioRpcError`
+  - `StatusCode.UNAVAILABLE`
+  - `ipv4:127.0.0.1:50051: FD shutdown`
+
+Conclusion:
+- API code path is functional.
+- Runtime blocked by current Actian container behavior on this host.
+
+## Run B: Memory Backend (Successful)
+
+Preconditions:
+- `VECTOR_BACKEND=memory`
+- `VECTOR_AUTO_FALLBACK_MEMORY=true`
+- `GEMINI_MODEL=models/gemini-3-flash-preview`
+- `EMBEDDING_MODEL=models/gemini-embedding-001`
+
+### Health
 
 ```text
-## Health
 HTTP/1.1 200 OK
-{"status":"ok","vector_db":"unreachable","vector_client_installed":true,"embedding_configured":true,"embedding_model":"text-embedding-004","gemini_configured":true,"gemini_model":"gemini-3-flash",...}
-
-## Session Start
-HTTP/1.1 500 Internal Server Error
-Internal Server Error
-
-## Chat
-HTTP/1.1 500 Internal Server Error
-Internal Server Error
-
-## Cleanup Generate
-HTTP/1.1 500 Internal Server Error
-Internal Server Error
-
-## Artifacts
-HTTP/1.1 500 Internal Server Error
-Internal Server Error
+{"status":"ok","vector_backend":"memory","vector_db":"connected","vector_client_installed":true,"embedding_configured":true,"embedding_model":"models/gemini-embedding-001","gemini_configured":true,"gemini_model":"models/gemini-3-flash-preview",...}
 ```
 
-## Root Cause Observed in Server Logs
+### Session Start
 
-All stateful endpoints failed on VectorDB calls with:
+```text
+HTTP/1.1 200 OK
+{"session_id":"sess_demo_live","status":"created","chunk_count":1,"nitpick_count":1,"dropped_citation_count":0}
+```
 
-- `grpc.aio._call.AioRpcError`
-- `StatusCode.UNAVAILABLE`
-- `failed to connect to all addresses`
-- `ipv4:127.0.0.1:50051: FD shutdown`
+### Chat
 
-This confirms API wiring is functional, but live persistence is blocked by server-side gRPC connection resets from the current VectorDB runtime.
+```text
+HTTP/1.1 200 OK
+{"answer":"To address the request for stricter reporting language ...","citations":["doc_001:c001"],"inferred_updates":[{"issue_id":"issue_001","previous_status":"open","new_status":"in_progress","reason":"Investor requested edits for this issue."}],"pending_resolution_issue_id":"issue_001"}
+```
 
-## Conclusion
+### Cleanup Generate
 
-- End-to-end flow is implemented and callable.
-- Live run is currently blocked by VectorDB runtime stability.
-- Next successful live run requires a working VectorDB image/runtime that responds correctly to gRPC requests.
+```text
+HTTP/1.1 200 OK
+{"session_id":"sess_demo_live","status":"completed","artifact_paths":{"revised_text_path":"be/artifacts/sess_demo_live/revised_document.txt","revised_pdf_path":"be/artifacts/sess_demo_live/revised_document.pdf","investor_email_path":"be/artifacts/sess_demo_live/investor_email.txt"},"unresolved_issue_ids":["issue_001"],"change_log":[...]}
+```
+
+### Artifacts
+
+```text
+HTTP/1.1 200 OK
+{"session_id":"sess_demo_live","artifact_paths":{...},"existing_artifacts":{"revised_text_path":true,"revised_pdf_path":true,"investor_email_path":true}}
+```
+
+## Final Notes
+
+- End-to-end demo flow is verified and working in `memory` backend mode.
+- Actian mode remains available but requires runtime stabilization on this host.

@@ -11,6 +11,8 @@ class Settings(BaseSettings):
     log_level: str = "INFO"
 
     vector_db_address: str = "localhost:50051"
+    vector_backend: str = "actian"
+    vector_auto_fallback_memory: bool = True
     vector_collection_document_chunks: str = "document_chunks"
     vector_collection_nitpick_issues: str = "nitpick_issues"
     vector_collection_conversation_turns: str = "conversation_turns"
@@ -21,9 +23,9 @@ class Settings(BaseSettings):
     vector_hnsw_ef_search: int = 50
 
     embedding_dim: int = 768
-    embedding_model: str = "text-embedding-004"
+    embedding_model: str = "models/gemini-embedding-001"
 
-    gemini_model: str = "gemini-3-flash"
+    gemini_model: str = "models/gemini-3-flash-preview"
     gemini_api_key: str = ""
 
     artifacts_dir: str = "be/artifacts"

@@ -243,6 +243,8 @@ If investor declines:
 11. Request sizing:
    - no request size limit enforcement in MVP
 12. Runtime configuration defaults (env-driven, no hardcoded secrets):
+   - `VECTOR_BACKEND=actian` (or `memory` for demo fallback)
+   - `VECTOR_AUTO_FALLBACK_MEMORY=true`
    - `VECTOR_COLLECTION_DOCUMENT_CHUNKS=document_chunks`
    - `VECTOR_COLLECTION_NITPICK_ISSUES=nitpick_issues`
    - `VECTOR_COLLECTION_CONVERSATION_TURNS=conversation_turns`
@@ -252,7 +254,8 @@ If investor declines:
    - `VECTOR_HNSW_EF_CONSTRUCT=200`
    - `VECTOR_HNSW_EF_SEARCH=50`
    - `EMBEDDING_DIM=768`
-   - `GEMINI_MODEL=gemini-3-flash`
+   - `EMBEDDING_MODEL=models/gemini-embedding-001`
+   - `GEMINI_MODEL=models/gemini-3-flash-preview`
    - `GEMINI_API_KEY=<from Google AI Studio>`
 
 ## Implementation Order

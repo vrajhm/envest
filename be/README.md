@@ -13,6 +13,9 @@
    cp be/.env.example be/.env
    ```
    Set `GEMINI_API_KEY` in `be/.env`.
+   If Actian gRPC is unstable on your machine, set:
+   - `VECTOR_BACKEND=memory`
+   - or keep `VECTOR_BACKEND=actian` with `VECTOR_AUTO_FALLBACK_MEMORY=true`
 3. Run API:
    ```bash
    uvicorn app.main:app --reload --app-dir be
@@ -34,6 +37,7 @@ curl -s http://127.0.0.1:8000/health | jq
 ```
 
 Look for:
+- `vector_backend` (`actian` or `memory`)
 - `vector_db` not `client_missing`
 - `embedding_configured: true` (or fallback mode for local testing)
 - `gemini_configured: true` (or fallback mode for local testing)

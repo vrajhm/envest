@@ -21,7 +21,12 @@ async def lifespan(app: FastAPI):
         await services.vector_store.connect()
         await services.vector_store.ensure_collections()
         vector_ok, vector_detail = await services.vector_store.ping()
-        logger.info("Vector preflight: ok=%s detail=%s", vector_ok, vector_detail)
+        logger.info(
+            "Vector preflight: backend=%s ok=%s detail=%s",
+            services.vector_store.backend,
+            vector_ok,
+            vector_detail,
+        )
     except Exception as exc:  # pragma: no cover
         logger.warning("Vector store startup check failed: %s", exc)
 
