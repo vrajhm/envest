@@ -54,3 +54,11 @@ temp/
 .env
 .env.local
 *.pem
+
+# Local RAG docs/scripts (keep out of git)
+be/rag_agent/chat_cli.sh
+be/rag_agent/run_demo_flow.sh
+
+# Local generated artifacts
+be/artifacts/
+be/rag_agent/artifacts/
