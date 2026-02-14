@@ -2,6 +2,7 @@ llama-cloud>=1.0
 fastapi
 python-dotenv
 uvicorn
-llama-index-core
-llama-index-llms-google-genai
-llama-index-embeddings-gemini
+llama-index-core>=0.14.0
+llama-index-llms-google-genai>=0.8.0
+llama-index-embeddings-google-genai>=0.3.0
+google-generativeai

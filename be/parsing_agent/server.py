@@ -2,17 +2,19 @@
 LlamaParse + scoring: parse climate contracts, then score alignment with investor goals.
 Uses vector retrieval (top-k chunks) to avoid sending the full document to the LLM.
 """
+import asyncio
 import json
+import logging
 import os
 import re
 from pathlib import Path
 
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException, UploadFile, File, Form
+from fastapi import FastAPI, HTTPException
 from fastapi.responses import PlainTextResponse
 from llama_cloud import AsyncLlamaCloud
 from llama_index.core import Document, VectorStoreIndex, Settings
-from llama_index.embeddings.gemini import GeminiEmbedding
+from llama_index.embeddings.google_genai import GoogleGenAIEmbedding
 from llama_index.llms.google_genai import GoogleGenAI
 from pydantic import BaseModel
 import uvicorn
@@ -24,6 +26,7 @@ load_dotenv()
 LLAMA_API_KEY = os.getenv("LLAMA_CLOUD_API_KEY") or os.getenv("llamaparse_api_key")
 
 app = FastAPI(title="LlamaParse + Contract Scoring", version="0.2.0")
+logger = logging.getLogger("parsing_agent")
 
 # In-memory state: last parsed markdown and vector index (for retrieval only)
 _last_markdown: str | None = None
@@ -37,19 +40,21 @@ def _get_llm():
     api_key = os.getenv("GOOGLE_API_KEY")
     if not api_key:
         return None
-    return GoogleGenAI(model="gemini-2.0-flash", api_key=api_key)
+    return GoogleGenAI(model="models/gemini-2.0-flash", api_key=api_key)
 
 
 def _get_embed_model():
     api_key = os.getenv("GOOGLE_API_KEY")
     if not api_key:
         return None
-    return GeminiEmbedding(model_name="gemini-embedding-001", api_key=api_key)
+    return GoogleGenAIEmbedding(model_name="gemini-embedding-001", api_key=api_key)
 
 
 def _build_vector_index(markdown: str) -> VectorStoreIndex | None:
     """Chunk the markdown, embed, and build a vector index for retrieval only."""
     global _vector_index
+    if not markdown.strip():
+        return None
     embed = _get_embed_model()
     if not embed:
         return None
@@ -76,6 +81,44 @@ def _parse_llm_json(raw: str) -> dict:
     if match:
         raw = match.group(1).strip()
     return json.loads(raw)
+
+
+def _extract_markdown(result) -> tuple[str, str]:
+    """Extract markdown text from known Llama parse result fields."""
+    candidates = [
+        ("markdown_full", getattr(result, "markdown_full", None)),
+        ("text_full", getattr(result, "text_full", None)),
+    ]
+    for source, value in candidates:
+        if isinstance(value, str) and value.strip():
+            return value, source
+
+    markdown_obj = getattr(result, "markdown", None)
+    markdown_pages = getattr(markdown_obj, "pages", None)
+    if isinstance(markdown_pages, list):
+        markdown_chunks: list[str] = []
+        for page in markdown_pages:
+            if getattr(page, "success", False) is not True:
+                continue
+            value = getattr(page, "markdown", None)
+            if isinstance(value, str) and value.strip():
+                markdown_chunks.append(value)
+        if markdown_chunks:
+            return "\n\n".join(markdown_chunks), "markdown.pages"
+
+    text_obj = getattr(result, "text", None)
+    text_pages = getattr(text_obj, "pages", None)
+    if isinstance(text_pages, list):
+        text_chunks = [
+            page_text
+            for page in text_pages
+            for page_text in [getattr(page, "text", None)]
+            if isinstance(page_text, str) and page_text.strip()
+        ]
+        if text_chunks:
+            return "\n\n".join(text_chunks), "text.pages"
+
+    return "", "none"
 
 
 # Request body for /score (validation only; response is raw JSON from LLM)
@@ -123,13 +166,9 @@ For each vulnerable clause: assign vulnerability_score 0-100 (higher = more expl
 
 
 @app.post("/parse", response_class=PlainTextResponse)
-async def parse_document(
-    file_path: str | None = Form(None),
-    file: UploadFile | None = File(None),
-):
+async def parse_document():
     """
-    Parse a local document with LlamaParse (Llama Cloud).
-    Provide either form field file_path=/path/to/doc.pdf or multipart file=@doc.pdf.
+    Parse the mock ESG report document with LlamaParse (Llama Cloud).
     Returns the parsed markdown and builds a vector index for later scoring.
     """
     if not LLAMA_API_KEY:
@@ -138,19 +177,9 @@ async def parse_document(
             detail="Set LLAMA_CLOUD_API_KEY or llamaparse_api_key in .env",
         )
 
-    path: Path | None = None
-    if file and file.filename:
-        temp_dir = Path(__file__).resolve().parent / ".tmp_uploads"
-        temp_dir.mkdir(exist_ok=True)
-        path = temp_dir / file.filename
-        content = await file.read()
-        path.write_bytes(content)
-    elif file_path:
-        path = Path(file_path).resolve()
-        if not path.is_file():
-            raise HTTPException(status_code=400, detail=f"File not found: {path}")
-    else:
-        raise HTTPException(status_code=400, detail="Provide 'file_path' or upload a 'file'")
+    path = Path(__file__).resolve().parent / "ESG Report.pdf"
+    if not path.is_file():
+        raise HTTPException(status_code=400, detail=f"File not found: {path}")
 
     try:
         async with AsyncLlamaCloud(api_key=LLAMA_API_KEY) as client:
@@ -158,7 +187,7 @@ async def parse_document(
                 upload_file=str(path),
                 tier="cost_effective",
                 version="latest",
-                expand=["markdown_full"],
+                expand=["markdown", "text"],
             )
     except Exception as e:
         raise HTTPException(status_code=502, detail=f"LlamaParse error: {e!s}")
@@ -169,10 +198,41 @@ async def parse_document(
             detail=f"Parsing job status: {result.job.status}",
         )
 
-    markdown = getattr(result, "markdown_full", None) or ""
+    markdown, markdown_source = _extract_markdown(result)
+    logger.info("Parse completed: markdown_source=%s chars=%d", markdown_source, len(markdown))
+    if not markdown.strip():
+        markdown_obj = getattr(result, "markdown", None)
+        markdown_pages = getattr(markdown_obj, "pages", None)
+        text_obj = getattr(result, "text", None)
+        text_pages = getattr(text_obj, "pages", None)
+        markdown_page_count = len(markdown_pages) if isinstance(markdown_pages, list) else 0
+        successful_markdown_page_count = 0
+        if isinstance(markdown_pages, list):
+            successful_markdown_page_count = sum(
+                1
+                for page in markdown_pages
+                if getattr(page, "success", False) is True
+                and isinstance(getattr(page, "markdown", None), str)
+                and bool(getattr(page, "markdown").strip())
+            )
+        text_page_count = len(text_pages) if isinstance(text_pages, list) else 0
+        logger.warning(
+            "Parse completed with empty content: job_id=%s status=%s has_markdown=%s markdown_pages=%d successful_markdown_pages=%d text_pages=%d",
+            getattr(result.job, "id", "unknown"),
+            getattr(result.job, "status", "unknown"),
+            bool(markdown_obj),
+            markdown_page_count,
+            successful_markdown_page_count,
+            text_page_count,
+        )
+        raise HTTPException(
+            status_code=502,
+            detail="LlamaParse completed, but no extractable content was found in markdown/text pages.",
+        )
+
     global _last_markdown
     _last_markdown = markdown
-    _build_vector_index(markdown)
+    await asyncio.to_thread(_build_vector_index, markdown)
 
     return markdown
 
@@ -198,8 +258,8 @@ async def score_contract(body: ScoreBody):
 
     chunks = _retrieve_chunks(retrieval_query, top_k)
     if not chunks:
-        # Index may not exist if OPENAI wasn't configured at parse time
-        _build_vector_index(_last_markdown)
+        # Index may not exist if GOOGLE_API_KEY wasn't configured at parse time
+        await asyncio.to_thread(_build_vector_index, _last_markdown)
         chunks = _retrieve_chunks(retrieval_query, top_k)
     if not chunks:
         raise HTTPException(
@@ -219,7 +279,7 @@ async def score_contract(body: ScoreBody):
     prompt = SCORE_PROMPT_TEMPLATE.format(chunks_text=chunks_text, goals_text=goals_text)
 
     try:
-        response = llm.complete(prompt)
+        response = await llm.acomplete(prompt)
         raw_text = (getattr(response, "text", None) or str(response)).strip()
         result = _parse_llm_json(raw_text)
         # Normalize: ensure vulnerable_clauses exists and each has similar_bad_examples
