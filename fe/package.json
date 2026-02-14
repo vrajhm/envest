@@ -9,6 +9,10 @@
     "lint": "eslint"
   },
   "dependencies": {
+    "@fontsource/archivo-black": "^5.2.8",
+    "@fontsource/montserrat": "^5.2.8",
+    "@fontsource/zalando-sans-expanded": "^5.2.1",
+    "@next/font": "^14.2.15",
     "next": "16.1.6",
     "react": "19.2.3",
     "react-dom": "19.2.3"
