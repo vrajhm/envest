@@ -127,41 +127,133 @@ class ScoreBody(BaseModel):
     top_k: int | None = None
 
 
-SCORE_PROMPT_TEMPLATE = """You are evaluating an ESG report. Your task is to (1) score how well the report's language, commitments, and syntax align with the investor priorities below, and (2) identify vulnerable clauses in the document—vague language, loopholes, weak commitments, or greenwashing-like wording—and score each for exploitability.
+SCORE_PROMPT_TEMPLATE = """You are a senior ESG disclosure analyst with expertise in investor-aligned reporting, greenwashing detection, regulatory scrutiny patterns, and historical ESG controversies.
 
-Use your knowledge of famous ESG reports and controversies. When you know of a similar clause from a real company's ESG report that was criticized or exploited, include it in similar_bad_examples for that vulnerable clause. If you have no such example, leave similar_bad_examples as an empty array. No external search is used; rely on your own knowledge.
+Your task has two required components:
 
-Relevant excerpts from the document (these are the only parts you should use):
+(1) ALIGNMENT SCORING
+Evaluate how well the report's language, commitments, structure, and tone align with the investor priorities below.
+
+(2) VULNERABILITY ANALYSIS
+Identify specific clauses that are vulnerable due to:
+- Vagueness or undefined terminology
+- Loopholes or escape clauses
+- Non-quantified commitments
+- Lack of timelines or baselines
+- Conditional or discretionary language (e.g., "aim to", "seek to", "where feasible")
+- Overly broad sustainability claims
+- Framing that overstates impact relative to evidence
+- Greenwashing-style rhetoric
+- Weak accountability mechanisms
+
+You must rely ONLY on the provided excerpts. Do not assume facts not in evidence. No external search is used. Use your internal knowledge of ESG reporting norms and well-known controversies.
+
+KNOWN ESG CONTROVERSIES AND LOOPHOLES TO REFERENCE:
+
+Famous Greenwashing Cases:
+- ExxonMobil's "Energy Factor" foundation funding climate denial while company's ESG scores masked actual lobbying
+- Volkswagen's "Clean Diesel" scandal where emissions tests were rigged
+- BP's "Beyond Petroleum" rebranding while continuing heavy oil investments
+- Shell's "major oil company" sustainability reports with vague "net zero" goals
+- Amazon's "Climate Pledge" using carbon offsets instead of actual emissions reductions
+- Apple's 2030 carbon neutral claims relying heavily on offset projects
+- Meta/Google's carbon neutral claims excluding Scope 3 supply chain emissions
+- Nestlé's "carbon neutral" coffee claims based on offset schemes
+- H&M's "Conscious Collection" sustainability line with vague sustainability claims
+-fast fashion industry's "recycling" programs with low actual recycling rates
+
+Common Loopholes to Detect:
+- "We aim to..." / "We seek to..." / "Our goal is to..." without concrete targets
+- "Carbon neutral" achieved through offsets rather than emissions reduction
+- "Net zero by 2050" commitments without interim targets or scope 3 inclusion
+- "Renewable energy" claims using RECs without actual renewable procurement
+- "Water neutral" achieved through offset schemes
+- "Zero deforestation" commitments excluding leased land
+- "Circular economy" claims with low recycling/inclusion rates
+- "ESG leader" rankings purchased through ESG rating agencies
+- "Science-based targets" that are not officially validated
+- "Scope 3 emissions under evaluation" - indefinitely deferred
+- "Baseline recalculated" to make emissions appear lower
+- "Carbon intensity" metrics instead of absolute emissions
+- "Year-over-year improvement" ignoring absolute growth
+- "Industry-leading" with no verifiable benchmarks
+
+Company-Specific Patterns:
+- Oil & Gas: Scope 3 exclusion, "transition" language, offset reliance
+- Tech: Data center emissions exclusion, renewable claims without additionality
+- Fashion: Microfiber pollution, supply chain visibility, wage issues
+- Food/Ag: Deforestation, land use, water intensity
+- Mining: Tailings dams, Indigenous consent, rehabilitation bonds
+
+If a clause resembles language from any of the above cases, include a comparable example in similar_bad_examples with the company name and year.
+If no known example applies, return an empty array [].
+
+--------------------------------------------------
+RELEVANT EXCERPTS (ONLY THESE MAY BE USED):
 
 {chunks_text}
 
-Investor priorities (what they care about):
+INVESTOR PRIORITIES:
 {goals_text}
+--------------------------------------------------
+
+SCORING GUIDELINES
+
+Overall Trust Score (0–100):
+0–20  = Highly misleading, structurally weak, or greenwashing-heavy
+21–40 = Major ambiguity, weak commitments
+41–60 = Mixed quality; partial alignment with material weaknesses
+61–80 = Strong alignment; minor clarity or accountability gaps
+81–100 = Highly specific, measurable, time-bound, and credible
+
+Per-Goal Score (0–100):
+Evaluate:
+- Specificity (quantified vs. vague)
+- Measurability (baseline, targets, metrics)
+- Time-bound commitments (deadlines vs. "aim to")
+- Clear baselines (vs. "recalculated" baselines)
+- Accountability signals (board oversight, penalties)
+- Direct relevance to investor priority
+
+Vulnerability Score (0–100):
+Higher score = more exploitable
+
+0–20  = Clear, precise, measurable
+21–40 = Minor ambiguity
+41–60 = Noticeable weakness or hedging
+61–80 = Significant loopholes or accountability gaps
+81–100 = Highly exploitable; resembles known greenwashing patterns
+
+--------------------------------------------------
 
 Output only valid JSON with no other text. Use this exact structure:
 
-{{
+{
   "overall_trust_score": <number 0-100>,
   "per_goal_scores": [
-    {{ "goal": "<goal text>", "score": <0-100>, "notes": "<short note>" }},
-    ...
+    { "goal": "<goal text>", "score": <0-100>, "notes": "<short note>" }
   ],
   "syntax_notes": "<short overall note on document language and legitimacy>",
   "vulnerable_clauses": [
-    {{
+    {
       "clause_text": "<excerpt from the document>",
       "vulnerability_score": <number 0-100, higher = more exploitable>,
       "notes": "<optional short note>",
       "similar_bad_examples": [
-        {{ "example_clause": "<clause from a known ESG report>", "source": "<e.g. Company X 2022 ESG report>" }},
-        ...
+        { "example_clause": "<clause from a known ESG report>", "source": "<e.g. Company X 2022 ESG report>" }
       ]
-    }},
-    ...
+    }
   ]
-}}
+}
 
-For each vulnerable clause: assign vulnerability_score 0-100 (higher = more exploitable or similar to known-bad patterns). similar_bad_examples must be an array of objects with example_clause and source; use [] when you have no known example.
+For each vulnerable clause:
+- vulnerability_score must be 0–100.
+- similar_bad_examples must be an array of objects with example_clause and source.
+- If no known comparable example exists, return [].
+- Do not fabricate historical examples.
+- Do not invent excerpts not present in the provided text.
+
+Be skeptical, analytical, and investor-focused.
 """
 
 
