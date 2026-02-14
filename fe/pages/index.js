@@ -48,8 +48,8 @@ export default function HeatmapPage() {
           paint: {
             "heatmap-weight": ["get", "severity"],
             "heatmap-intensity": 1,
-            "heatmap-radius": 25,
-            "heatmap-opacity": 0.8,
+            "heatmap-radius": 30,
+            "heatmap-opacity": 1,
             "heatmap-color": [
               "interpolate",
               ["linear"],
