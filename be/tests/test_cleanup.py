@@ -20,8 +20,8 @@ class FakeCleanupService:
                 "investor_email_path": f"be/artifacts/{session_id}/investor_email.txt",
                 "revised_text_path": f"be/artifacts/{session_id}/revised_document.txt",
             },
-            unresolved_issue_ids=["issue_009"],
-            change_log=["Applied: issue_001 -> add annual disclosure clause"],
+            unresolved_clause_ids=["clause_009"],
+            change_log=["Applied: clause_001 -> add annual disclosure clause"],
         )
 
     async def get_artifacts(self, session_id: str):  # noqa: ANN001

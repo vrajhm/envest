@@ -5,7 +5,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 from app.core.config import get_settings
-from app.models.schemas import CleanupGenerateRequest, NitpickIssueInput, SessionRecord
+from app.models.schemas import CleanupGenerateRequest, SessionRecord, TrackedVulnerableClause
 from app.services.cleanup_service import CleanupService
 
 
@@ -25,7 +25,7 @@ class FakeSessionService:
 
 class FakeGeminiService:
     async def generate(self, system_prompt: str, user_prompt: str) -> str:
-        if "contract editing assistant" in system_prompt:
+        if "editing assistant" in system_prompt:
             return "Revised document output"
         return "Subject: Requested Revisions\n\nPlease implement the listed changes."
 
@@ -37,25 +37,27 @@ def test_cleanup_service_creates_local_artifacts(tmp_path, monkeypatch) -> None:
     now = datetime.now(UTC)
     session = SessionRecord(
         session_id="sess_local_001",
-        company_name="Acme Climate Tech",
-        doc_id="doc_001",
-        doc_title="Climate Contract",
-        full_document_text="Original contract text.",
-        green_score=71.2,
+        overall_trust_score=65,
+        per_goal_scores=[
+            {
+                "goal": "Reduce carbon emissions",
+                "score": 75,
+                "notes": "Scope 3 missing.",
+            }
+        ],
+        syntax_notes="Lacks scope 3 clarity.",
         status="active",
         created_at=now,
         updated_at=now,
-        chunk_ids=["doc_001:c001"],
-        nitpicks=[
-            NitpickIssueInput(
-                issue_id="issue_001",
-                title="Missing annual audit clause",
-                severity="high",
+        vulnerable_clauses=[
+            TrackedVulnerableClause(
+                clause_id="clause_001",
+                clause_text="Scope 3: Under evaluation",
+                vulnerability_score=90,
+                notes="Major omission.",
+                similar_bad_examples=[],
                 status="in_progress",
-                summary="No annual audit language.",
-                citations=["doc_001:c001"],
-                suggested_changes=["Add annual third-party audit requirement."],
-                accepted_change_instructions="Add annual third-party audit requirement with due date.",
+                accepted_change_instructions="Add full Scope 3 accounting with deadline.",
             )
         ],
         artifact_paths={},
@@ -67,7 +69,7 @@ def test_cleanup_service_creates_local_artifacts(tmp_path, monkeypatch) -> None:
     result = asyncio.run(
         cleanup.generate_cleanup(
             session_id="sess_local_001",
-            request=CleanupGenerateRequest(confirmed=True, investor_note="Prioritize audit language."),
+            request=CleanupGenerateRequest(confirmed=True, investor_note="Prioritize Scope 3 language."),
         )
     )
 
@@ -87,5 +89,4 @@ def test_cleanup_service_creates_local_artifacts(tmp_path, monkeypatch) -> None:
     assert fake_sessions.saved.status == "completed"
     assert fake_sessions.saved.artifact_paths["revised_pdf_path"] == str(revised_pdf_path)
 
-    # Reset settings cache for other tests.
     get_settings.cache_clear()

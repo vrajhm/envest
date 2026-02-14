@@ -7,9 +7,9 @@ from uuid import uuid4
 from app.models.schemas import (
     ChatRequest,
     ChatResponse,
-    IssueStatusUpdate,
-    NitpickIssueInput,
+    ClauseStatusUpdate,
     SessionRecord,
+    TrackedVulnerableClause,
 )
 from app.services.embeddings import EmbeddingsService
 from app.services.gemini_service import GeminiService
@@ -67,67 +67,66 @@ class ChatService:
 
     async def chat(self, session_id: str, request: ChatRequest) -> ChatResponse:
         session = await self._session_service.get_session(session_id)
-        known_chunk_ids = set(session.chunk_ids)
+        known_clause_ids = {clause.clause_id for clause in session.vulnerable_clauses}
         now = datetime.now(UTC)
 
-        target_issue_id = self._infer_target_issue_id(session, request)
-        updates: list[IssueStatusUpdate] = []
+        target_clause_id = self._infer_target_clause_id(session, request)
+        updates: list[ClauseStatusUpdate] = []
 
-        pending_issue_id = session.pending_resolution_issue_id
+        pending_clause_id = session.pending_resolution_clause_id
         message_l = request.message.lower()
         explicit_confirm = self._has_any(message_l, self._RESOLVE_CONFIRM_PATTERNS)
         soft_resolve = self._has_any(message_l, self._RESOLVE_SOFT_PATTERNS)
         reopen = self._has_any(message_l, self._REOPEN_PATTERNS)
         edit_requested = self._has_any(message_l, self._EDIT_PATTERNS)
 
-        if target_issue_id:
-            issue = self._find_issue(session.nitpicks, target_issue_id)
-            if issue:
+        if target_clause_id:
+            clause = self._find_clause(session.vulnerable_clauses, target_clause_id)
+            if clause:
                 updates.extend(
-                    self._apply_issue_updates(
-                        issue=issue,
+                    self._apply_clause_updates(
+                        clause=clause,
                         message=request.message.strip(),
                         explicit_confirm=explicit_confirm,
                         soft_resolve=soft_resolve,
                         reopen=reopen,
                         edit_requested=edit_requested,
-                        pending_issue_id=pending_issue_id,
+                        pending_clause_id=pending_clause_id,
                     )
                 )
-                pending_issue_id = self._next_pending_issue_id(
-                    issue=issue,
+                pending_clause_id = self._next_pending_clause_id(
+                    clause=clause,
                     explicit_confirm=explicit_confirm,
                     soft_resolve=soft_resolve,
                     reopen=reopen,
                     edit_requested=edit_requested,
-                    current_pending=pending_issue_id,
+                    current_pending=pending_clause_id,
                 )
-        elif pending_issue_id and explicit_confirm:
-            pending_issue = self._find_issue(session.nitpicks, pending_issue_id)
-            if pending_issue:
+        elif pending_clause_id and explicit_confirm:
+            pending_clause = self._find_clause(session.vulnerable_clauses, pending_clause_id)
+            if pending_clause:
                 updates.extend(
                     self._set_status(
-                        pending_issue,
+                        pending_clause,
                         "resolved",
                         "Investor confirmed resolution in chat.",
                     )
                 )
-                pending_issue_id = None
+                pending_clause_id = None
 
-        session.pending_resolution_issue_id = pending_issue_id
+        session.pending_resolution_clause_id = pending_clause_id
         session.updated_at = now
-        session.status = "ready_for_cleanup" if all(i.status == "resolved" for i in session.nitpicks) else "active"
+        session.status = "ready_for_cleanup" if all(c.status == "resolved" for c in session.vulnerable_clauses) else "active"
 
-        citations = self._response_citations(session, target_issue_id)
-        answer = await self._build_response(session, request, target_issue_id, citations)
+        citations = self._response_citations(session, target_clause_id)
+        answer = await self._build_response(session, request, target_clause_id, citations)
 
-        # Persist user turn.
         user_turn_id = uuid4().hex
         user_payload = {
             "session_id": session.session_id,
             "conversation_id": request.conversation_id,
             "turn_id": user_turn_id,
-            "issue_id": target_issue_id,
+            "clause_id": target_clause_id,
             "role": "user",
             "message": request.message,
             "citations": [],
@@ -137,13 +136,12 @@ class ChatService:
         user_vector = await self._embeddings.embed_text(request.message)
         await self._vector_store.upsert_conversation_turn(session.session_id, user_turn_id, user_vector, user_payload)
 
-        # Persist assistant turn.
         assistant_turn_id = uuid4().hex
         assistant_payload = {
             "session_id": session.session_id,
             "conversation_id": request.conversation_id,
             "turn_id": assistant_turn_id,
-            "issue_id": target_issue_id,
+            "clause_id": target_clause_id,
             "role": "assistant",
             "message": answer,
             "citations": citations,
@@ -157,27 +155,24 @@ class ChatService:
             assistant_payload,
         )
 
-        # Persist issue state updates and session state.
-        for issue in session.nitpicks:
-            clean_citations = [c for c in issue.citations if c in known_chunk_ids]
-            issue.citations = clean_citations
+        for clause in session.vulnerable_clauses:
+            if clause.clause_id not in known_clause_ids:
+                continue
             payload = {
                 "session_id": session.session_id,
-                "doc_id": session.doc_id,
-                "issue_id": issue.issue_id,
-                "title": issue.title,
-                "severity": issue.severity,
-                "status": issue.status,
-                "summary": issue.summary,
-                "citations": clean_citations,
-                "suggested_changes": issue.suggested_changes,
-                "accepted_change_instructions": issue.accepted_change_instructions,
+                "clause_id": clause.clause_id,
+                "clause_text": clause.clause_text,
+                "vulnerability_score": clause.vulnerability_score,
+                "notes": clause.notes,
+                "similar_bad_examples": [e.model_dump() for e in clause.similar_bad_examples],
+                "status": clause.status,
+                "accepted_change_instructions": clause.accepted_change_instructions,
                 "updated_at": now.isoformat(),
             }
             vector = await self._embeddings.embed_text(
-                f"{issue.title}\n{issue.summary}\n{issue.status}\n{issue.accepted_change_instructions}"
+                f"{clause.clause_text}\n{clause.vulnerability_score}\n{clause.status}\n{clause.accepted_change_instructions}"
             )
-            await self._vector_store.upsert_nitpick_issue(session.session_id, issue.issue_id, vector, payload)
+            await self._vector_store.upsert_vulnerable_clause(session.session_id, clause.clause_id, vector, payload)
 
         await self._session_service.save_session(session)
 
@@ -185,85 +180,100 @@ class ChatService:
             answer=answer,
             citations=citations,
             inferred_updates=updates,
-            pending_resolution_issue_id=session.pending_resolution_issue_id,
+            pending_resolution_clause_id=session.pending_resolution_clause_id,
         )
 
-    def _infer_target_issue_id(self, session: SessionRecord, request: ChatRequest) -> str | None:
-        if request.issue_id and self._find_issue(session.nitpicks, request.issue_id):
-            return request.issue_id
+    def _infer_target_clause_id(self, session: SessionRecord, request: ChatRequest) -> str | None:
+        if request.clause_id and self._find_clause(session.vulnerable_clauses, request.clause_id):
+            return request.clause_id
 
-        message_issue_match = re.search(r"(issue_[a-zA-Z0-9_-]+)", request.message)
-        if message_issue_match:
-            candidate = message_issue_match.group(1)
-            if self._find_issue(session.nitpicks, candidate):
+        message_clause_match = re.search(r"(clause_[a-zA-Z0-9_-]+)", request.message)
+        if message_clause_match:
+            candidate = message_clause_match.group(1)
+            if self._find_clause(session.vulnerable_clauses, candidate):
                 return candidate
 
-        if session.pending_resolution_issue_id and self._find_issue(session.nitpicks, session.pending_resolution_issue_id):
-            return session.pending_resolution_issue_id
+        if session.pending_resolution_clause_id and self._find_clause(
+            session.vulnerable_clauses,
+            session.pending_resolution_clause_id,
+        ):
+            return session.pending_resolution_clause_id
 
-        unresolved = [i for i in session.nitpicks if i.status != "resolved"]
+        unresolved = [c for c in session.vulnerable_clauses if c.status != "resolved"]
         if len(unresolved) == 1:
-            return unresolved[0].issue_id
+            return unresolved[0].clause_id
         return None
 
     @staticmethod
-    def _find_issue(issues: list[NitpickIssueInput], issue_id: str) -> NitpickIssueInput | None:
-        for issue in issues:
-            if issue.issue_id == issue_id:
-                return issue
+    def _find_clause(clauses: list[TrackedVulnerableClause], clause_id: str) -> TrackedVulnerableClause | None:
+        for clause in clauses:
+            if clause.clause_id == clause_id:
+                return clause
         return None
 
     @staticmethod
     def _has_any(message: str, patterns: tuple[str, ...]) -> bool:
         return any(pattern in message for pattern in patterns)
 
-    def _apply_issue_updates(
+    def _apply_clause_updates(
         self,
-        issue: NitpickIssueInput,
+        clause: TrackedVulnerableClause,
         message: str,
         explicit_confirm: bool,
         soft_resolve: bool,
         reopen: bool,
         edit_requested: bool,
-        pending_issue_id: str | None,
-    ) -> list[IssueStatusUpdate]:
-        updates: list[IssueStatusUpdate] = []
+        pending_clause_id: str | None,
+    ) -> list[ClauseStatusUpdate]:
+        updates: list[ClauseStatusUpdate] = []
 
         if reopen:
-            updates.extend(self._set_status(issue, "open", "Investor asked to reopen the issue."))
+            updates.extend(self._set_status(clause, "open", "Investor asked to reopen the clause."))
 
-        if explicit_confirm or (soft_resolve and pending_issue_id == issue.issue_id):
-            updates.extend(self._set_status(issue, "resolved", "Investor confirmed issue resolution."))
+        if explicit_confirm or (soft_resolve and pending_clause_id == clause.clause_id):
+            updates.extend(self._set_status(clause, "resolved", "Investor confirmed clause resolution."))
         elif soft_resolve:
-            updates.extend(self._set_status(issue, "in_progress", "Investor indicated likely approval; awaiting confirmation."))
+            updates.extend(
+                self._set_status(
+                    clause,
+                    "in_progress",
+                    "Investor indicated likely approval; awaiting confirmation.",
+                )
+            )
 
         if edit_requested:
-            if issue.status == "resolved":
-                updates.extend(self._set_status(issue, "in_progress", "Investor requested additional edits after resolution."))
-            elif issue.status == "open":
-                updates.extend(self._set_status(issue, "in_progress", "Investor requested edits for this issue."))
-            issue.accepted_change_instructions = self._append_instruction(
-                issue.accepted_change_instructions,
+            if clause.status == "resolved":
+                updates.extend(
+                    self._set_status(
+                        clause,
+                        "in_progress",
+                        "Investor requested additional edits after resolution.",
+                    )
+                )
+            elif clause.status == "open":
+                updates.extend(self._set_status(clause, "in_progress", "Investor requested edits for this clause."))
+            clause.accepted_change_instructions = self._append_instruction(
+                clause.accepted_change_instructions,
                 message,
             )
 
         return updates
 
-    def _next_pending_issue_id(
+    def _next_pending_clause_id(
         self,
-        issue: NitpickIssueInput,
+        clause: TrackedVulnerableClause,
         explicit_confirm: bool,
         soft_resolve: bool,
         reopen: bool,
         edit_requested: bool,
         current_pending: str | None,
     ) -> str | None:
-        if issue.status == "resolved":
-            return None if current_pending == issue.issue_id else current_pending
-        if reopen and issue.status == "open":
-            return None if current_pending == issue.issue_id else current_pending
-        if edit_requested or soft_resolve or issue.status == "in_progress":
-            return issue.issue_id
+        if clause.status == "resolved":
+            return None if current_pending == clause.clause_id else current_pending
+        if reopen and clause.status == "open":
+            return None if current_pending == clause.clause_id else current_pending
+        if edit_requested or soft_resolve or clause.status == "in_progress":
+            return clause.clause_id
         return current_pending
 
     @staticmethod
@@ -279,59 +289,58 @@ class ChatService:
 
     @staticmethod
     def _set_status(
-        issue: NitpickIssueInput,
+        clause: TrackedVulnerableClause,
         new_status: str,
         reason: str,
-    ) -> list[IssueStatusUpdate]:
-        if issue.status == new_status:
+    ) -> list[ClauseStatusUpdate]:
+        if clause.status == new_status:
             return []
-        update = IssueStatusUpdate(
-            issue_id=issue.issue_id,
-            previous_status=issue.status,
+        update = ClauseStatusUpdate(
+            clause_id=clause.clause_id,
+            previous_status=clause.status,
             new_status=new_status,
             reason=reason,
         )
-        issue.status = new_status
+        clause.status = new_status
         return [update]
 
     @staticmethod
-    def _response_citations(session: SessionRecord, issue_id: str | None) -> list[str]:
-        known = set(session.chunk_ids)
-        if issue_id:
-            for issue in session.nitpicks:
-                if issue.issue_id == issue_id:
-                    return [c for c in issue.citations if c in known]
+    def _response_citations(session: SessionRecord, clause_id: str | None) -> list[str]:
+        if clause_id:
+            return [clause_id]
 
-        for issue in session.nitpicks:
-            if issue.status != "resolved":
-                citations = [c for c in issue.citations if c in known]
-                if citations:
-                    return citations
+        for clause in session.vulnerable_clauses:
+            if clause.status != "resolved":
+                return [clause.clause_id]
         return []
 
     async def _build_response(
         self,
         session: SessionRecord,
         request: ChatRequest,
-        target_issue_id: str | None,
+        target_clause_id: str | None,
         citations: list[str],
     ) -> str:
-        issue_lines = []
-        for issue in session.nitpicks:
-            issue_lines.append(
-                f"- {issue.issue_id} | {issue.title} | {issue.severity} | {issue.status}"
+        clause_lines = []
+        for clause in session.vulnerable_clauses:
+            clause_lines.append(
+                f"- {clause.clause_id} | score={clause.vulnerability_score} | {clause.status} | {clause.clause_text}"
             )
 
         focused = "None"
-        if target_issue_id:
-            issue = self._find_issue(session.nitpicks, target_issue_id)
-            if issue:
+        if target_clause_id:
+            clause = self._find_clause(session.vulnerable_clauses, target_clause_id)
+            if clause:
+                examples = "\n".join(
+                    [f"  - {e.example_clause} (source: {e.source})" for e in clause.similar_bad_examples]
+                )
                 focused = (
-                    f"Issue {issue.issue_id}: {issue.title}\n"
-                    f"Severity: {issue.severity}\nStatus: {issue.status}\n"
-                    f"Summary: {issue.summary}\n"
-                    f"Suggested changes: {issue.suggested_changes}\n"
-                    f"Accepted instructions: {issue.accepted_change_instructions}"
+                    f"Clause {clause.clause_id}: {clause.clause_text}\n"
+                    f"Vulnerability score: {clause.vulnerability_score}\n"
+                    f"Status: {clause.status}\n"
+                    f"Notes: {clause.notes or 'None'}\n"
+                    f"Similar bad examples:\n{examples or '  - None'}\n"
+                    f"Accepted instructions: {clause.accepted_change_instructions or 'None'}"
                 )
 
         system_prompt = (
@@ -339,12 +348,13 @@ class ChatService:
             "Only use provided context, be concise, and keep claims grounded. "
             "If uncertain, state uncertainty explicitly."
         )
+        goals_block = "\n".join([f"- {g.goal}: {g.score} ({g.notes})" for g in session.per_goal_scores])
         user_prompt = (
-            f"Company: {session.company_name}\n"
-            f"Document: {session.doc_title} ({session.doc_id})\n"
-            f"Green score: {session.green_score}\n"
-            f"Focused issue:\n{focused}\n\n"
-            f"Issue summary:\n" + "\n".join(issue_lines) + "\n\n"
+            f"Overall trust score: {session.overall_trust_score}\n"
+            f"Syntax notes: {session.syntax_notes}\n"
+            f"Per-goal scores:\n{goals_block or '- None'}\n\n"
+            f"Focused clause:\n{focused}\n\n"
+            f"Vulnerable clauses summary:\n" + "\n".join(clause_lines) + "\n\n"
             f"Investor message: {request.message}\n"
             f"Citations to reference if relevant: {citations}\n"
             "Respond in plain text. Mention concrete next-step edits when useful."

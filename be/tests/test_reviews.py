@@ -4,7 +4,7 @@ from fastapi.testclient import TestClient
 
 from app.api.dependencies import get_session_service
 from app.main import app
-from app.models.schemas import NitpickIssueInput, SessionRecord, SessionStartResponse
+from app.models.schemas import SessionRecord, SessionStartResponse, TrackedVulnerableClause
 from app.services.session_service import SessionNotFoundError
 
 
@@ -13,9 +13,8 @@ class FakeSessionService:
         return SessionStartResponse(
             session_id=path_session_id,
             status="created",
-            chunk_count=len(request.document_chunks),
-            nitpick_count=len(request.nitpicks),
-            dropped_citation_count=0,
+            per_goal_count=len(request.per_goal_scores),
+            vulnerable_clause_count=len(request.vulnerable_clauses),
         )
 
     async def get_session(self, session_id: str) -> SessionRecord:
@@ -24,24 +23,27 @@ class FakeSessionService:
         now = datetime.now(UTC)
         return SessionRecord(
             session_id="sess_001",
-            company_name="Acme",
-            doc_id="doc_001",
-            doc_title="Doc",
-            full_document_text="full",
-            green_score=72.0,
+            overall_trust_score=65,
+            per_goal_scores=[
+                {
+                    "goal": "Reduce carbon emissions",
+                    "score": 75,
+                    "notes": "Scope 3 missing.",
+                }
+            ],
+            syntax_notes="Positive language but missing detail.",
             status="active",
             created_at=now,
             updated_at=now,
-            chunk_ids=["doc_001:c001"],
-            nitpicks=[
-                NitpickIssueInput(
-                    issue_id="issue_001",
-                    title="Issue",
-                    severity="high",
+            vulnerable_clauses=[
+                TrackedVulnerableClause(
+                    clause_id="clause_001",
+                    clause_text="Net Zero emissions by 2040",
+                    vulnerability_score=60,
+                    notes="Missing interim steps.",
+                    similar_bad_examples=[],
                     status="open",
-                    summary="summary",
-                    citations=["doc_001:c001"],
-                    suggested_changes=["change"],
+                    accepted_change_instructions="",
                 )
             ],
             artifact_paths={},
@@ -55,29 +57,21 @@ def test_start_session_endpoint() -> None:
     response = client.post(
         "/v1/reviews/sessions/sess_001/start",
         json={
-            "session_id": "sess_001",
-            "company_name": "Acme Climate Tech",
-            "doc_id": "doc_001",
-            "doc_title": "Climate Contract v3",
-            "full_document_text": "full text",
-            "green_score": 72.5,
-            "document_chunks": [
+            "overall_trust_score": 65,
+            "per_goal_scores": [
                 {
-                    "chunk_id": "doc_001:c001",
-                    "text": "Supplier emissions reporting is annual...",
-                    "source_name": "Climate Contract v3",
-                    "citations": ["p12"],
+                    "goal": "Reduce carbon emissions",
+                    "score": 75,
+                    "notes": "Scope 3 missing.",
                 }
             ],
-            "nitpicks": [
+            "syntax_notes": "Positive language but missing detail.",
+            "vulnerable_clauses": [
                 {
-                    "issue_id": "issue_001",
-                    "title": "No annual scope-3 audit clause",
-                    "severity": "high",
-                    "status": "open",
-                    "summary": "Contract lacks mandatory third-party scope-3 audit language.",
-                    "citations": ["doc_001:c001"],
-                    "suggested_changes": ["Add annual third-party scope-3 audit requirement."],
+                    "clause_text": "Net Zero emissions by 2040",
+                    "vulnerability_score": 60,
+                    "notes": "Missing interim steps.",
+                    "similar_bad_examples": [],
                 }
             ],
         },

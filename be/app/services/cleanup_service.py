@@ -14,7 +14,7 @@ from app.models.schemas import (
     SessionArtifactsResponse,
 )
 from app.services.gemini_service import GeminiService
-from app.services.session_service import SessionNotFoundError, SessionService
+from app.services.session_service import SessionService
 
 
 class CleanupService:
@@ -34,40 +34,38 @@ class CleanupService:
         session = await self._session_service.get_session(session_id)
         now = datetime.now(UTC)
 
-        unresolved_issue_ids = [issue.issue_id for issue in session.nitpicks if issue.status != "resolved"]
+        unresolved_clause_ids = [clause.clause_id for clause in session.vulnerable_clauses if clause.status != "resolved"]
         accepted_changes = [
-            f"{issue.issue_id}: {issue.accepted_change_instructions.strip()}"
-            for issue in session.nitpicks
-            if issue.accepted_change_instructions.strip()
+            f"{clause.clause_id}: {clause.accepted_change_instructions.strip()}"
+            for clause in session.vulnerable_clauses
+            if clause.accepted_change_instructions.strip()
         ]
 
         if not accepted_changes:
             accepted_changes = [
-                f"{issue.issue_id}: {issue.title} -> {issue.suggested_changes[0]}"
-                for issue in session.nitpicks
-                if issue.suggested_changes
+                f"{clause.clause_id}: tighten language for '{clause.clause_text}'"
+                for clause in session.vulnerable_clauses
+                if clause.status != "resolved"
             ]
 
         revised_text = await self._generate_revised_document_text(
-            company_name=session.company_name,
-            doc_title=session.doc_title,
-            full_text=session.full_document_text,
+            overall_trust_score=session.overall_trust_score,
+            syntax_notes=session.syntax_notes,
+            per_goal_lines=[f"{goal.goal}: {goal.score} ({goal.notes})" for goal in session.per_goal_scores],
             accepted_changes=accepted_changes,
             investor_note=request.investor_note,
         )
 
         email_text = await self._generate_email_text(
-            company_name=session.company_name,
-            doc_title=session.doc_title,
             accepted_changes=accepted_changes,
-            unresolved_issue_ids=unresolved_issue_ids,
+            unresolved_clause_ids=unresolved_clause_ids,
         )
 
         change_log = [f"Applied: {change}" for change in accepted_changes]
-        if unresolved_issue_ids:
+        if unresolved_clause_ids:
             change_log.append(
-                "Unresolved issues intentionally left open by investor: "
-                + ", ".join(unresolved_issue_ids)
+                "Unresolved clauses intentionally left open by investor: "
+                + ", ".join(unresolved_clause_ids)
             )
 
         session_dir = self._artifacts_dir / session.session_id
@@ -95,7 +93,7 @@ class CleanupService:
             session_id=session.session_id,
             status="completed",
             artifact_paths=session.artifact_paths,
-            unresolved_issue_ids=unresolved_issue_ids,
+            unresolved_clause_ids=unresolved_clause_ids,
             change_log=change_log,
         )
 
@@ -105,57 +103,59 @@ class CleanupService:
 
     async def _generate_revised_document_text(
         self,
-        company_name: str,
-        doc_title: str,
-        full_text: str,
+        overall_trust_score: int,
+        syntax_notes: str,
+        per_goal_lines: list[str],
         accepted_changes: list[str],
         investor_note: str | None,
     ) -> str:
         system_prompt = (
-            "You are a contract editing assistant. Produce a cleaned-up revised version of the document "
-            "based only on requested changes. Keep structure and tone professional."
+            "You are a climate contract editing assistant. Produce a cleaned-up revised draft summary "
+            "based only on provided analysis and requested changes."
         )
         user_prompt = (
-            f"Company: {company_name}\n"
-            f"Document: {doc_title}\n"
-            f"Investor note: {investor_note or 'None'}\n\n"
-            f"Requested changes:\n- "
+            f"Overall trust score: {overall_trust_score}\n"
+            f"Syntax notes: {syntax_notes}\n"
+            "Per-goal scores:\n- "
+            + "\n- ".join(per_goal_lines)
+            + "\n\nInvestor note: "
+            + (investor_note or "None")
+            + "\n\nRequested changes:\n- "
             + "\n- ".join(accepted_changes)
-            + "\n\nOriginal document:\n"
-            + full_text
+            + "\n\nReturn a plain-text revised draft section list."
         )
         generated = await self._gemini.generate(system_prompt=system_prompt, user_prompt=user_prompt)
 
         if generated.strip():
             return generated.strip()
 
-        fallback_header = (
-            f"Revised Draft for {company_name} - {doc_title}\n"
-            "(Gemini fallback mode: preserving original text and requested changes.)\n\n"
-            "Requested changes:\n- "
-            + "\n- ".join(accepted_changes)
-            + "\n\n"
-        )
-        return fallback_header + full_text
+        fallback = [
+            "Revised Draft (Fallback)",
+            "",
+            f"Overall trust score: {overall_trust_score}",
+            f"Syntax notes: {syntax_notes}",
+            "",
+            "Per-goal scores:",
+        ]
+        fallback.extend([f"- {line}" for line in per_goal_lines])
+        fallback.extend(["", "Requested changes:"])
+        fallback.extend([f"- {change}" for change in accepted_changes])
+        return "\n".join(fallback)
 
     async def _generate_email_text(
         self,
-        company_name: str,
-        doc_title: str,
         accepted_changes: list[str],
-        unresolved_issue_ids: list[str],
+        unresolved_clause_ids: list[str],
     ) -> str:
         system_prompt = (
             "You are drafting a concise investor follow-up email. "
             "Return plain text only, no markdown."
         )
         user_prompt = (
-            f"Company: {company_name}\n"
-            f"Document: {doc_title}\n"
-            f"Requested changes:\n- "
+            "Requested changes:\n- "
             + "\n- ".join(accepted_changes)
             + "\n\n"
-            f"Unresolved issues: {', '.join(unresolved_issue_ids) if unresolved_issue_ids else 'None'}\n"
+            f"Unresolved clauses: {', '.join(unresolved_clause_ids) if unresolved_clause_ids else 'None'}\n"
             "Draft a professional email asking for these updates before investment proceeds."
         )
         generated = await self._gemini.generate(system_prompt=system_prompt, user_prompt=user_prompt)
@@ -164,20 +164,20 @@ class CleanupService:
             return generated.strip()
 
         lines = [
-            f"Subject: Requested Revisions to {doc_title}",
+            "Subject: Requested Revisions Before Investment",
             "",
-            f"Hello {company_name} team,",
+            "Hello team,",
             "",
-            "Thank you for sharing the latest document. Before proceeding with investment, we request the following changes:",
+            "Thank you for sharing the document. Before proceeding with investment, we request these changes:",
             "",
         ]
         lines.extend([f"- {change}" for change in accepted_changes])
-        if unresolved_issue_ids:
+        if unresolved_clause_ids:
             lines.extend(
                 [
                     "",
-                    "The following items remain open but are acknowledged for now:",
-                    f"- {', '.join(unresolved_issue_ids)}",
+                    "The following clauses remain open but are acknowledged for now:",
+                    f"- {', '.join(unresolved_clause_ids)}",
                 ]
             )
         lines.extend(

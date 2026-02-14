@@ -13,29 +13,31 @@ curl -s "${BASE_URL}/health" | jq .
 echo "== Build Session Payload =="
 cat > "${TMP_JSON}" <<JSON
 {
-  "session_id": "${SESSION_ID}",
-  "company_name": "Acme Climate Tech",
-  "doc_id": "doc_001",
-  "doc_title": "Climate Contract v3",
-  "full_document_text": "Original contract text for demo purposes.",
-  "green_score": 72.5,
-  "document_chunks": [
+  "overall_trust_score": 65,
+  "per_goal_scores": [
     {
-      "chunk_id": "doc_001:c001",
-      "text": "Supplier emissions reporting is annual and should include third-party verification.",
-      "source_name": "Climate Contract v3",
-      "citations": ["p12", "sec_4.2"]
+      "goal": "Reduce carbon emissions",
+      "score": 75,
+      "notes": "Reasonable Scope 1 & 2 reduction, but Scope 3 is missing."
+    },
+    {
+      "goal": "No deforestation",
+      "score": 50,
+      "notes": "Relies on carbon offsets, which may involve deforestation risks."
     }
   ],
-  "nitpicks": [
+  "syntax_notes": "The report uses positive language but lacks detail in key areas.",
+  "vulnerable_clauses": [
     {
-      "issue_id": "issue_001",
-      "title": "No annual scope-3 audit clause",
-      "severity": "high",
-      "status": "open",
-      "summary": "Contract lacks mandatory third-party scope-3 audit language.",
-      "citations": ["doc_001:c001"],
-      "suggested_changes": ["Add annual third-party scope-3 audit requirement."]
+      "clause_text": "Scope 3: Under evaluation",
+      "vulnerability_score": 90,
+      "notes": "Lack of Scope 3 data is a major omission.",
+      "similar_bad_examples": [
+        {
+          "example_clause": "Scope 3 emissions are being assessed.",
+          "source": "Numerous company ESG reports"
+        }
+      ]
     }
   ]
 }
@@ -49,12 +51,12 @@ curl -s -X POST "${BASE_URL}/v1/reviews/sessions/${SESSION_ID}/start" \
 echo "== Chat: Request Changes =="
 curl -s -X POST "${BASE_URL}/v1/reviews/sessions/${SESSION_ID}/chat" \
   -H "Content-Type: application/json" \
-  -d "{\"conversation_id\":\"${CONV_ID}\",\"issue_id\":\"issue_001\",\"message\":\"Please add stricter annual scope-3 audit language with a due date.\"}" | jq .
+  -d "{\"conversation_id\":\"${CONV_ID}\",\"clause_id\":\"clause_001\",\"message\":\"Please add specific Scope 3 reporting requirements with deadlines.\"}" | jq .
 
 echo "== Chat: Resolve =="
 curl -s -X POST "${BASE_URL}/v1/reviews/sessions/${SESSION_ID}/chat" \
   -H "Content-Type: application/json" \
-  -d "{\"conversation_id\":\"${CONV_ID}\",\"issue_id\":\"issue_001\",\"message\":\"Mark this resolved.\"}" | jq .
+  -d "{\"conversation_id\":\"${CONV_ID}\",\"clause_id\":\"clause_001\",\"message\":\"Mark this resolved.\"}" | jq .
 
 echo "== Generate Cleanup Artifacts =="
 curl -s -X POST "${BASE_URL}/v1/reviews/sessions/${SESSION_ID}/cleanup/generate" \

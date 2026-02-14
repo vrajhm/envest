@@ -13,9 +13,6 @@
    cp be/.env.example be/.env
    ```
    Set `GEMINI_API_KEY` in `be/.env`.
-   If Actian gRPC is unstable on your machine, set:
-   - `VECTOR_BACKEND=memory`
-   - or keep `VECTOR_BACKEND=actian` with `VECTOR_AUTO_FALLBACK_MEMORY=true`
 3. Run API:
    ```bash
    uvicorn app.main:app --reload --app-dir be
@@ -30,100 +27,42 @@
 - `POST /v1/reviews/sessions/{session_id}/cleanup/generate`
 - `GET /v1/reviews/sessions/{session_id}/artifacts`
 
-## Preflight Check
+## Session start payload (new schema)
 
-```bash
-curl -s http://127.0.0.1:8000/health | jq
-```
-
-Look for:
-- `vector_backend` (`actian` or `memory`)
-- `vector_db` not `client_missing`
-- `embedding_configured: true` (or fallback mode for local testing)
-- `gemini_configured: true` (or fallback mode for local testing)
-
-## End-to-End Demo Flow
-
-### 1) Start session with precomputed input
-
-```bash
-cat > /tmp/envest_session.json <<'EOF'
+```json
 {
-  "session_id": "sess_demo_001",
-  "company_name": "Acme Climate Tech",
-  "doc_id": "doc_001",
-  "doc_title": "Climate Contract v3",
-  "full_document_text": "This is the original contract text. Emissions reporting is annual.",
-  "green_score": 72.5,
-  "document_chunks": [
+  "overall_trust_score": 65,
+  "per_goal_scores": [
     {
-      "chunk_id": "doc_001:c001",
-      "text": "Supplier emissions reporting is annual...",
-      "source_name": "Climate Contract v3",
-      "citations": ["p12", "sec_4.2"]
+      "goal": "Reduce carbon emissions",
+      "score": 75,
+      "notes": "Reasonable Scope 1 & 2 reduction, but Scope 3 is missing."
     }
   ],
-  "nitpicks": [
+  "syntax_notes": "Positive language but missing detail in critical areas.",
+  "vulnerable_clauses": [
     {
-      "issue_id": "issue_001",
-      "title": "No annual scope-3 audit clause",
-      "severity": "high",
-      "status": "open",
-      "summary": "Contract lacks mandatory third-party scope-3 audit language.",
-      "citations": ["doc_001:c001"],
-      "suggested_changes": ["Add annual third-party scope-3 audit requirement."]
+      "clause_text": "Scope 3: Under evaluation",
+      "vulnerability_score": 90,
+      "notes": "Major omission.",
+      "similar_bad_examples": [
+        {
+          "example_clause": "Scope 3 emissions are being assessed.",
+          "source": "Numerous company ESG reports"
+        }
+      ]
     }
   ]
 }
-EOF
-
-curl -s -X POST "http://127.0.0.1:8000/v1/reviews/sessions/sess_demo_001/start" \
-  -H "Content-Type: application/json" \
-  --data @/tmp/envest_session.json | jq
 ```
 
-### 2) Chat and request edits
+## Demo flow
 
 ```bash
-curl -s -X POST "http://127.0.0.1:8000/v1/reviews/sessions/sess_demo_001/chat" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "conversation_id": "conv_001",
-    "issue_id": "issue_001",
-    "message": "Please add stricter annual scope-3 audit language with a due date."
-  }' | jq
-```
-
-### 3) Confirm and resolve in chat
-
-```bash
-curl -s -X POST "http://127.0.0.1:8000/v1/reviews/sessions/sess_demo_001/chat" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "conversation_id": "conv_001",
-    "issue_id": "issue_001",
-    "message": "Mark this resolved."
-  }' | jq
-```
-
-### 4) Generate cleanup artifacts
-
-```bash
-curl -s -X POST "http://127.0.0.1:8000/v1/reviews/sessions/sess_demo_001/cleanup/generate" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "confirmed": true,
-    "investor_note": "Proceed with requested language updates."
-  }' | jq
-```
-
-### 5) Retrieve artifact paths
-
-```bash
-curl -s "http://127.0.0.1:8000/v1/reviews/sessions/sess_demo_001/artifacts" | jq
+bash be/run_demo_flow.sh
 ```
 
 Artifacts are saved to:
-- `be/artifacts/sess_demo_001/revised_document.txt`
-- `be/artifacts/sess_demo_001/revised_document.pdf`
-- `be/artifacts/sess_demo_001/investor_email.txt`
+- `be/artifacts/{session_id}/revised_document.txt`
+- `be/artifacts/{session_id}/revised_document.pdf`
+- `be/artifacts/{session_id}/investor_email.txt`

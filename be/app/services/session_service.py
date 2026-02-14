@@ -2,7 +2,12 @@ from __future__ import annotations
 
 from datetime import UTC, datetime
 
-from app.models.schemas import NitpickIssueInput, SessionRecord, SessionStartRequest, SessionStartResponse
+from app.models.schemas import (
+    SessionRecord,
+    SessionStartRequest,
+    SessionStartResponse,
+    TrackedVulnerableClause,
+)
 from app.services.embeddings import EmbeddingsService
 from app.services.vector_store import VectorStoreService
 
@@ -26,105 +31,106 @@ class SessionService:
         request: SessionStartRequest,
         force: bool = False,
     ) -> SessionStartResponse:
-        if path_session_id != request.session_id:
-            raise ValueError("Path session_id must match request.session_id")
-
-        existing = await self._vector_store.get_review_session(request.session_id)
+        existing = await self._vector_store.get_review_session(path_session_id)
         if existing and not force:
-            raise SessionConflictError(f"session_id '{request.session_id}' already exists")
+            raise SessionConflictError(f"session_id '{path_session_id}' already exists")
 
         now = datetime.now(UTC)
-        known_chunk_ids = {chunk.chunk_id for chunk in request.document_chunks}
 
-        chunk_payloads: list[dict] = []
-        chunk_vectors: list[list[float]] = []
-        for chunk in request.document_chunks:
-            chunk_payloads.append(
+        per_goal_payloads: list[dict] = []
+        per_goal_vectors: list[list[float]] = []
+        per_goal_ids: list[str] = []
+        for idx, goal in enumerate(request.per_goal_scores, start=1):
+            goal_id = f"goal_{idx:03d}"
+            per_goal_ids.append(goal_id)
+            per_goal_payloads.append(
                 {
-                    "session_id": request.session_id,
-                    "doc_id": request.doc_id,
-                    "chunk_id": chunk.chunk_id,
-                    "text": chunk.text,
-                    "source_name": chunk.source_name,
-                    "citations": chunk.citations,
+                    "session_id": path_session_id,
+                    "goal_id": goal_id,
+                    "goal": goal.goal,
+                    "score": goal.score,
+                    "notes": goal.notes,
                     "created_at": now.isoformat(),
                 }
             )
-            chunk_vectors.append(await self._embeddings.embed_text(chunk.text))
+            per_goal_vectors.append(await self._embeddings.embed_text(f"{goal.goal}\n{goal.score}\n{goal.notes}"))
 
-        dropped_citations = 0
-        sanitized_nitpicks: list[NitpickIssueInput] = []
-        nitpick_payloads: list[dict] = []
-        nitpick_vectors: list[list[float]] = []
+        tracked_clauses: list[TrackedVulnerableClause] = []
+        clause_payloads: list[dict] = []
+        clause_vectors: list[list[float]] = []
+        clause_ids: list[str] = []
 
-        for issue in request.nitpicks:
-            valid_citations = [c for c in issue.citations if c in known_chunk_ids]
-            dropped_citations += len(issue.citations) - len(valid_citations)
+        for idx, clause in enumerate(request.vulnerable_clauses, start=1):
+            clause_id = f"clause_{idx:03d}"
+            clause_ids.append(clause_id)
+            tracked = TrackedVulnerableClause(
+                clause_id=clause_id,
+                clause_text=clause.clause_text,
+                vulnerability_score=clause.vulnerability_score,
+                notes=clause.notes,
+                similar_bad_examples=clause.similar_bad_examples,
+                status="open",
+                accepted_change_instructions="",
+            )
+            tracked_clauses.append(tracked)
 
-            cleaned_issue = issue.model_copy(update={"citations": valid_citations})
-            sanitized_nitpicks.append(cleaned_issue)
-
-            nitpick_payloads.append(
+            clause_payloads.append(
                 {
-                    "session_id": request.session_id,
-                    "doc_id": request.doc_id,
-                    "issue_id": cleaned_issue.issue_id,
-                    "title": cleaned_issue.title,
-                    "severity": cleaned_issue.severity,
-                    "status": cleaned_issue.status,
-                    "summary": cleaned_issue.summary,
-                    "citations": valid_citations,
-                    "suggested_changes": cleaned_issue.suggested_changes,
-                    "accepted_change_instructions": cleaned_issue.accepted_change_instructions,
+                    "session_id": path_session_id,
+                    "clause_id": clause_id,
+                    "clause_text": tracked.clause_text,
+                    "vulnerability_score": tracked.vulnerability_score,
+                    "notes": tracked.notes,
+                    "similar_bad_examples": [e.model_dump() for e in tracked.similar_bad_examples],
+                    "status": tracked.status,
+                    "accepted_change_instructions": tracked.accepted_change_instructions,
                     "updated_at": now.isoformat(),
                 }
             )
-            nitpick_vectors.append(
+            clause_vectors.append(
                 await self._embeddings.embed_text(
-                    f"{cleaned_issue.title}\n{cleaned_issue.summary}\n{cleaned_issue.severity}"
+                    f"{tracked.clause_text}\n{tracked.notes or ''}\n{tracked.vulnerability_score}"
                 )
             )
 
         session_payload = {
-            "session_id": request.session_id,
-            "company_name": request.company_name,
-            "doc_id": request.doc_id,
-            "doc_title": request.doc_title,
-            "full_document_text": request.full_document_text,
-            "green_score": request.green_score,
+            "session_id": path_session_id,
+            "overall_trust_score": request.overall_trust_score,
+            "per_goal_scores": [g.model_dump() for g in request.per_goal_scores],
+            "syntax_notes": request.syntax_notes,
             "status": "active",
             "created_at": now.isoformat(),
             "updated_at": now.isoformat(),
-            "chunk_ids": [chunk.chunk_id for chunk in request.document_chunks],
-            "nitpicks": [n.model_dump() for n in sanitized_nitpicks],
+            "vulnerable_clauses": [c.model_dump() for c in tracked_clauses],
             "artifact_paths": {},
-            "pending_resolution_issue_id": None,
+            "pending_resolution_clause_id": None,
         }
 
         session_vector = await self._embeddings.embed_text(
-            f"{request.company_name}\n{request.doc_title}\n{request.doc_id}"
+            f"Trust score: {request.overall_trust_score}\n"
+            f"Syntax notes: {request.syntax_notes}\n"
+            + "\n".join([f"{g.goal}: {g.score}" for g in request.per_goal_scores])
         )
 
-        await self._vector_store.upsert_review_session(request.session_id, session_vector, session_payload)
-        await self._vector_store.batch_upsert_document_chunks(
-            request.session_id,
-            [chunk.chunk_id for chunk in request.document_chunks],
-            chunk_vectors,
-            chunk_payloads,
+        await self._vector_store.upsert_review_session(path_session_id, session_vector, session_payload)
+        await self._vector_store.batch_upsert_per_goal_scores(
+            path_session_id,
+            per_goal_ids,
+            per_goal_vectors,
+            per_goal_payloads,
         )
-        await self._vector_store.batch_upsert_nitpick_issues(
-            request.session_id,
-            [issue.issue_id for issue in sanitized_nitpicks],
-            nitpick_vectors,
-            nitpick_payloads,
+        await self._vector_store.batch_upsert_vulnerable_clauses(
+            path_session_id,
+            clause_ids,
+            clause_vectors,
+            clause_payloads,
         )
 
         return SessionStartResponse(
-            session_id=request.session_id,
+            session_id=path_session_id,
             status="overwritten" if existing else "created",
-            chunk_count=len(request.document_chunks),
-            nitpick_count=len(request.nitpicks),
-            dropped_citation_count=dropped_citations,
+            per_goal_count=len(request.per_goal_scores),
+            vulnerable_clause_count=len(request.vulnerable_clauses),
         )
 
     async def get_session(self, session_id: str) -> SessionRecord:
@@ -136,6 +142,8 @@ class SessionService:
     async def save_session(self, session: SessionRecord) -> None:
         payload = session.model_dump(mode="json")
         session_vector = await self._embeddings.embed_text(
-            f"{session.company_name}\n{session.doc_title}\n{session.doc_id}"
+            f"Trust score: {session.overall_trust_score}\n"
+            f"Syntax notes: {session.syntax_notes}\n"
+            + "\n".join([f"{g.goal}: {g.score}" for g in session.per_goal_scores])
         )
         await self._vector_store.upsert_review_session(session.session_id, session_vector, payload)

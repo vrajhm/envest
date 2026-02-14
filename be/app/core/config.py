@@ -13,8 +13,8 @@ class Settings(BaseSettings):
     vector_db_address: str = "localhost:50051"
     vector_backend: str = "actian"
     vector_auto_fallback_memory: bool = True
-    vector_collection_document_chunks: str = "document_chunks"
-    vector_collection_nitpick_issues: str = "nitpick_issues"
+    vector_collection_per_goal_scores: str = "per_goal_scores"
+    vector_collection_vulnerable_clauses: str = "vulnerable_clauses"
     vector_collection_conversation_turns: str = "conversation_turns"
     vector_collection_review_sessions: str = "review_sessions"
     vector_distance_metric: str = "COSINE"

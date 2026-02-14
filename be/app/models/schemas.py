@@ -7,57 +7,55 @@ from typing import Literal
 from pydantic import BaseModel, Field
 
 
-class DocumentChunkInput(BaseModel):
-    chunk_id: str
-    text: str
-    source_name: str
-    citations: list[str] = Field(default_factory=list)
+class PerGoalScoreInput(BaseModel):
+    goal: str = Field(min_length=1)
+    score: int = Field(ge=0, le=100)
+    notes: str = Field(min_length=1)
 
 
-class NitpickIssueInput(BaseModel):
-    issue_id: str
-    title: str
-    severity: Literal["high", "medium", "low"]
+class SimilarBadExampleInput(BaseModel):
+    example_clause: str = Field(min_length=1)
+    source: str = Field(min_length=1)
+
+
+class VulnerableClauseInput(BaseModel):
+    clause_text: str = Field(min_length=1)
+    vulnerability_score: int = Field(ge=0, le=100)
+    notes: str | None = None
+    similar_bad_examples: list[SimilarBadExampleInput] = Field(default_factory=list)
+
+
+class TrackedVulnerableClause(VulnerableClauseInput):
+    clause_id: str
     status: Literal["open", "in_progress", "resolved"] = "open"
-    summary: str
-    citations: list[str] = Field(default_factory=list)
-    suggested_changes: list[str] = Field(default_factory=list)
     accepted_change_instructions: str = ""
 
 
 class SessionStartRequest(BaseModel):
-    session_id: str
-    company_name: str
-    doc_id: str
-    doc_title: str
-    full_document_text: str
-    green_score: float = Field(ge=0, le=100)
-    document_chunks: list[DocumentChunkInput]
-    nitpicks: list[NitpickIssueInput]
+    overall_trust_score: int = Field(ge=0, le=100)
+    per_goal_scores: list[PerGoalScoreInput] = Field(default_factory=list)
+    syntax_notes: str = Field(min_length=1)
+    vulnerable_clauses: list[VulnerableClauseInput] = Field(default_factory=list)
 
 
 class SessionStartResponse(BaseModel):
     session_id: str
     status: Literal["created", "overwritten"]
-    chunk_count: int
-    nitpick_count: int
-    dropped_citation_count: int
+    per_goal_count: int
+    vulnerable_clause_count: int
 
 
 class SessionRecord(BaseModel):
     session_id: str
-    company_name: str
-    doc_id: str
-    doc_title: str
-    full_document_text: str
-    green_score: float
+    overall_trust_score: int = Field(ge=0, le=100)
+    per_goal_scores: list[PerGoalScoreInput] = Field(default_factory=list)
+    syntax_notes: str
     status: Literal["active", "ready_for_cleanup", "completed"]
     created_at: datetime
     updated_at: datetime
-    chunk_ids: list[str]
-    nitpicks: list[NitpickIssueInput]
+    vulnerable_clauses: list[TrackedVulnerableClause] = Field(default_factory=list)
     artifact_paths: dict[str, str] = Field(default_factory=dict)
-    pending_resolution_issue_id: str | None = None
+    pending_resolution_clause_id: str | None = None
 
 
 class HealthResponse(BaseModel):
@@ -75,11 +73,11 @@ class HealthResponse(BaseModel):
 class ChatRequest(BaseModel):
     message: str = Field(min_length=1)
     conversation_id: str = "default"
-    issue_id: str | None = None
+    clause_id: str | None = None
 
 
-class IssueStatusUpdate(BaseModel):
-    issue_id: str
+class ClauseStatusUpdate(BaseModel):
+    clause_id: str
     previous_status: Literal["open", "in_progress", "resolved"]
     new_status: Literal["open", "in_progress", "resolved"]
     reason: str
@@ -88,8 +86,8 @@ class IssueStatusUpdate(BaseModel):
 class ChatResponse(BaseModel):
     answer: str
     citations: list[str] = Field(default_factory=list)
-    inferred_updates: list[IssueStatusUpdate] = Field(default_factory=list)
-    pending_resolution_issue_id: str | None = None
+    inferred_updates: list[ClauseStatusUpdate] = Field(default_factory=list)
+    pending_resolution_clause_id: str | None = None
 
 
 class CleanupGenerateRequest(BaseModel):
@@ -101,7 +99,7 @@ class CleanupGenerateResponse(BaseModel):
     session_id: str
     status: Literal["completed"]
     artifact_paths: dict[str, str]
-    unresolved_issue_ids: list[str] = Field(default_factory=list)
+    unresolved_clause_ids: list[str] = Field(default_factory=list)
     change_log: list[str] = Field(default_factory=list)
 
 

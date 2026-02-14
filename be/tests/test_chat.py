@@ -2,23 +2,23 @@ from fastapi.testclient import TestClient
 
 from app.api.dependencies import get_chat_service
 from app.main import app
-from app.models.schemas import ChatResponse, IssueStatusUpdate
+from app.models.schemas import ChatResponse, ClauseStatusUpdate
 
 
 class FakeChatService:
     async def chat(self, session_id: str, request):  # noqa: ANN001
         return ChatResponse(
-            answer="Acknowledged. I marked this issue in progress and captured your edit request.",
-            citations=["doc_001:c001"],
+            answer="Acknowledged. I marked this clause in progress and captured your edit request.",
+            citations=["clause_001"],
             inferred_updates=[
-                IssueStatusUpdate(
-                    issue_id=request.issue_id or "issue_001",
+                ClauseStatusUpdate(
+                    clause_id=request.clause_id or "clause_001",
                     previous_status="open",
                     new_status="in_progress",
                     reason="Investor requested edits.",
                 )
             ],
-            pending_resolution_issue_id=request.issue_id or "issue_001",
+            pending_resolution_clause_id=request.clause_id or "clause_001",
         )
 
 
@@ -30,8 +30,8 @@ def test_chat_endpoint() -> None:
         "/v1/reviews/sessions/sess_001/chat",
         json={
             "conversation_id": "conv_001",
-            "issue_id": "issue_001",
-            "message": "Please add stricter annual reporting language for this issue.",
+            "clause_id": "clause_001",
+            "message": "Please add stricter annual reporting language for this clause.",
         },
     )
 
@@ -39,6 +39,6 @@ def test_chat_endpoint() -> None:
 
     assert response.status_code == 200
     payload = response.json()
-    assert payload["citations"] == ["doc_001:c001"]
+    assert payload["citations"] == ["clause_001"]
     assert payload["inferred_updates"][0]["new_status"] == "in_progress"
-    assert payload["pending_resolution_issue_id"] == "issue_001"
+    assert payload["pending_resolution_clause_id"] == "clause_001"

@@ -24,15 +24,14 @@ class VectorStoreService:
         if self._backend not in {"actian", "memory"}:
             raise ValueError("VECTOR_BACKEND must be either 'actian' or 'memory'")
 
-        self.document_chunks_collection = self._settings.vector_collection_document_chunks
-        self.nitpick_issues_collection = self._settings.vector_collection_nitpick_issues
+        self.per_goal_scores_collection = self._settings.vector_collection_per_goal_scores
+        self.vulnerable_clauses_collection = self._settings.vector_collection_vulnerable_clauses
         self.conversation_turns_collection = self._settings.vector_collection_conversation_turns
         self.review_sessions_collection = self._settings.vector_collection_review_sessions
 
-        # Demo fallback in-memory storage
         self._mem_review_sessions: dict[str, dict[str, Any]] = {}
-        self._mem_document_chunks: dict[tuple[str, str], dict[str, Any]] = {}
-        self._mem_nitpick_issues: dict[tuple[str, str], dict[str, Any]] = {}
+        self._mem_per_goal_scores: dict[tuple[str, str], dict[str, Any]] = {}
+        self._mem_vulnerable_clauses: dict[tuple[str, str], dict[str, Any]] = {}
         self._mem_conversation_turns: dict[tuple[str, str], dict[str, Any]] = {}
 
     async def connect(self) -> None:
@@ -78,8 +77,8 @@ class VectorStoreService:
             return
         client = await self._require_client()
         names = [
-            self.document_chunks_collection,
-            self.nitpick_issues_collection,
+            self.per_goal_scores_collection,
+            self.vulnerable_clauses_collection,
             self.conversation_turns_collection,
             self.review_sessions_collection,
         ]
@@ -108,7 +107,7 @@ class VectorStoreService:
         client = await self._require_client()
         try:
             record = await client.get(self.review_sessions_collection, self._point_id(f"session:{session_id}"))
-        except Exception as exc:  # pragma: no cover - depends on server behavior
+        except Exception as exc:  # pragma: no cover
             if "not found" in str(exc).lower():
                 return None
             raise
@@ -116,50 +115,50 @@ class VectorStoreService:
             return None
         return getattr(record, "payload", None)
 
-    async def batch_upsert_document_chunks(
+    async def batch_upsert_per_goal_scores(
         self,
         session_id: str,
-        chunk_ids: list[str],
+        goal_ids: list[str],
         vectors: list[list[float]],
         payloads: list[dict[str, Any]],
     ) -> None:
         if self._backend == "memory":
-            for chunk_id, payload in zip(chunk_ids, payloads, strict=True):
-                self._mem_document_chunks[(session_id, chunk_id)] = payload
+            for goal_id, payload in zip(goal_ids, payloads, strict=True):
+                self._mem_per_goal_scores[(session_id, goal_id)] = payload
             return
         client = await self._require_client()
-        ids = [self._point_id(f"chunk:{session_id}:{cid}") for cid in chunk_ids]
-        await client.batch_upsert(self.document_chunks_collection, ids=ids, vectors=vectors, payloads=payloads)
+        ids = [self._point_id(f"goal:{session_id}:{gid}") for gid in goal_ids]
+        await client.batch_upsert(self.per_goal_scores_collection, ids=ids, vectors=vectors, payloads=payloads)
 
-    async def batch_upsert_nitpick_issues(
+    async def batch_upsert_vulnerable_clauses(
         self,
         session_id: str,
-        issue_ids: list[str],
+        clause_ids: list[str],
         vectors: list[list[float]],
         payloads: list[dict[str, Any]],
     ) -> None:
         if self._backend == "memory":
-            for issue_id, payload in zip(issue_ids, payloads, strict=True):
-                self._mem_nitpick_issues[(session_id, issue_id)] = payload
+            for clause_id, payload in zip(clause_ids, payloads, strict=True):
+                self._mem_vulnerable_clauses[(session_id, clause_id)] = payload
             return
         client = await self._require_client()
-        ids = [self._point_id(f"issue:{session_id}:{iid}") for iid in issue_ids]
-        await client.batch_upsert(self.nitpick_issues_collection, ids=ids, vectors=vectors, payloads=payloads)
+        ids = [self._point_id(f"clause:{session_id}:{cid}") for cid in clause_ids]
+        await client.batch_upsert(self.vulnerable_clauses_collection, ids=ids, vectors=vectors, payloads=payloads)
 
-    async def upsert_nitpick_issue(
+    async def upsert_vulnerable_clause(
         self,
         session_id: str,
-        issue_id: str,
+        clause_id: str,
         vector: list[float],
         payload: dict[str, Any],
     ) -> None:
         if self._backend == "memory":
-            self._mem_nitpick_issues[(session_id, issue_id)] = payload
+            self._mem_vulnerable_clauses[(session_id, clause_id)] = payload
             return
         client = await self._require_client()
         await client.upsert(
-            self.nitpick_issues_collection,
-            self._point_id(f"issue:{session_id}:{issue_id}"),
+            self.vulnerable_clauses_collection,
+            self._point_id(f"clause:{session_id}:{clause_id}"),
             vector,
             payload,
         )
@@ -197,7 +196,6 @@ class VectorStoreService:
         return self._client
 
     async def ping(self) -> tuple[bool, str]:
-        """Best-effort runtime connectivity check for health/preflight."""
         if self._backend == "memory":
             return True, "ok:memory"
         if AsyncCortexClient is None:
