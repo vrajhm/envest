@@ -5,13 +5,28 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "lint": "eslint"
   },
   "dependencies": {
+    "@fontsource/archivo-black": "^5.2.8",
+    "@fontsource/montserrat": "^5.2.8",
+    "@fontsource/zalando-sans-expanded": "^5.2.1",
+    "@next/font": "^14.2.15",
     "axios": "^1.6.0",
     "mapbox-gl": "^2.15.0",
-    "next": "^14.0.0",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "next": "16.1.6",
+    "react": "19.2.3",
+    "react-dom": "19.2.3"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "20.19.33",
+    "@types/react": "19.2.14",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.1.6",
+    "tailwindcss": "^4",
+    "typescript": "5.9.3"
   }
 }
