@@ -62,6 +62,10 @@ class SessionRecord(BaseModel):
 class HealthResponse(BaseModel):
     status: str
     vector_db: str
+    vector_client_installed: bool
+    gemini_configured: bool
+    gemini_model: str
+    details: dict[str, str] = Field(default_factory=dict)
 
 
 class ChatRequest(BaseModel):

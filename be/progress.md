@@ -76,6 +76,30 @@ Validation:
 - Compile checks passed.
 - Test suite passed with chat included (`4 passed`).
 
+## Step 3 Completed: Runtime Preflight and Readiness Visibility
+
+Implemented:
+- Added explicit preflight/readiness metadata to `GET /health`:
+  - `vector_client_installed`
+  - `gemini_configured`
+  - `gemini_model`
+  - `details` (last known vector/gemini errors)
+- Added VectorDB runtime checks in `VectorStoreService`:
+  - client install detection
+  - connection/error tracking (`last_error`)
+  - `ping()` health probe support
+- Added Gemini readiness tracking in `GeminiService`:
+  - configured/fallback status
+  - last-error diagnostics
+- Updated app startup logs (`lifespan`) to emit preflight status for:
+  - VectorDB connectivity/collection readiness
+  - Gemini configured vs fallback mode
+- Updated health endpoint test assertions for the expanded response payload.
+
+Validation:
+- Compile checks passed.
+- Test suite passed (`4 passed`) after preflight changes.
+
 ## Current Implemented API Surface
 
 - `GET /health`

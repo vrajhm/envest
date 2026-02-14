@@ -20,8 +20,15 @@ async def lifespan(app: FastAPI):
     try:
         await services.vector_store.connect()
         await services.vector_store.ensure_collections()
+        vector_ok, vector_detail = await services.vector_store.ping()
+        logger.info("Vector preflight: ok=%s detail=%s", vector_ok, vector_detail)
     except Exception as exc:  # pragma: no cover
         logger.warning("Vector store startup check failed: %s", exc)
+
+    if services.gemini_service.configured:
+        logger.info("Gemini preflight: configured model=%s", services.gemini_service.model)
+    else:
+        logger.warning("Gemini preflight: fallback mode (%s)", services.gemini_service.last_error)
     yield
     await services.vector_store.close()
 

@@ -19,6 +19,7 @@ class VectorStoreService:
         self._settings = get_settings()
         self._client: Any | None = None
         self._connected = False
+        self._last_error: str | None = None
 
         self.document_chunks_collection = self._settings.vector_collection_document_chunks
         self.nitpick_issues_collection = self._settings.vector_collection_nitpick_issues
@@ -29,11 +30,21 @@ class VectorStoreService:
         if self._connected:
             return
         if AsyncCortexClient is None:
+            self._last_error = (
+                "Actian cortex client not installed. Install wheel: "
+                "pip install ./actiancortex-0.1.0b1-py3-none-any.whl"
+            )
             logger.warning("cortex client not installed yet; vector operations will fail until wheel is installed")
             return
-        self._client = AsyncCortexClient(self._settings.vector_db_address)
-        await self._client.connect()
-        self._connected = True
+        try:
+            self._client = AsyncCortexClient(self._settings.vector_db_address)
+            await self._client.connect()
+            self._connected = True
+            self._last_error = None
+        except Exception as exc:
+            self._connected = False
+            self._last_error = str(exc)
+            raise
 
     async def close(self) -> None:
         if self._client and self._connected:
@@ -58,6 +69,7 @@ class VectorStoreService:
                     hnsw_ef_construct=self._settings.vector_hnsw_ef_construct,
                     hnsw_ef_search=self._settings.vector_hnsw_ef_search,
                 )
+        self._last_error = None
 
     async def upsert_review_session(self, session_id: str, vector: list[float], payload: dict[str, Any]) -> None:
         client = await self._require_client()
@@ -131,10 +143,38 @@ class VectorStoreService:
         if not self._connected:
             await self.connect()
         if self._client is None:
+            self._last_error = (
+                "Vector client unavailable. Install Actian wheel and ensure VECTOR_DB_ADDRESS is reachable."
+            )
             raise RuntimeError(
                 "Vector client unavailable. Install Actian wheel and ensure VECTOR_DB_ADDRESS is reachable."
             )
         return self._client
+
+    async def ping(self) -> tuple[bool, str]:
+        """Best-effort runtime connectivity check for health/preflight."""
+        if AsyncCortexClient is None:
+            return False, "client_missing"
+        try:
+            client = await self._require_client()
+            version, uptime = await client.health_check()
+            self._last_error = None
+            return True, f"ok:{version}:{uptime}"
+        except Exception as exc:
+            self._last_error = str(exc)
+            return False, "unreachable"
+
+    @property
+    def client_installed(self) -> bool:
+        return AsyncCortexClient is not None
+
+    @property
+    def connected(self) -> bool:
+        return self._connected
+
+    @property
+    def last_error(self) -> str | None:
+        return self._last_error
 
     @staticmethod
     def _point_id(raw: str) -> int:
