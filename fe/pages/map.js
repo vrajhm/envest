@@ -6,77 +6,158 @@ const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
 
 export default function MapPage() {
   const [data, setData] = useState(null);
-  const [hoverInfo, setHoverInfo] = useState(null);
   const [error, setError] = useState(null);
+
   const mapRef = useRef(null);
   const mapContainerRef = useRef(null);
 
+  // Fetch backend pollution data
   useEffect(() => {
     fetch("http://localhost:8000/issues")
-      .then((res) => res.json().then((d) => ({ ok: res.ok, status: res.status, data: d })))
+      .then((res) =>
+        res.json().then((d) => ({
+          ok: res.ok,
+          status: res.status,
+          data: d,
+        }))
+      )
       .then(({ ok, status, data }) => {
-        if (ok) setData(data);
-        else setError(data?.detail || `Backend error ${status}`);
+        if (ok) {
+          // 🟢 Adds fake Land & Water pollution data to each feature
+          const enhancedFeatures = data.features.map((f) => {
+            const air = f.properties.severity || 0;
+            // Random severity 0.1–0.9 for demo
+            const land = Math.random() * 0.8 + 0.1;
+            const water = Math.random() * 0.8 + 0.1;
+
+            // "General Pollution" = Average of the three
+            const general = (air + land + water) / 3;
+
+            return {
+              ...f,
+              properties: {
+                ...f.properties,
+                air_pollution: air,
+                land_pollution: land,
+                water_pollution: water,
+                general_severity: general,
+                // Override main severity for the circle radius/color
+                severity: general,
+              },
+            };
+          });
+
+          setData({ ...data, features: enhancedFeatures });
+        } else {
+          setError(data?.detail || `Backend error ${status}`);
+        }
       })
       .catch((err) => {
-        console.error("Failed to fetch:", err);
+        console.error("Fetch failed:", err);
         setError(err.message);
       });
   }, []);
 
+  // Initialize Map
   useEffect(() => {
     if (!data || !mapContainerRef.current || !MAPBOX_TOKEN) return;
+
     const initMap = async () => {
       const mapboxgl = (await import("mapbox-gl")).default;
       mapboxgl.accessToken = MAPBOX_TOKEN;
+
       const map = new mapboxgl.Map({
         container: mapContainerRef.current,
         style: "mapbox://styles/mapbox/light-v11",
-        center: [-122.4194, 37.7749],
-        zoom: 2,
+        center: [-98.5795, 39.8283], // Center of US
+        zoom: 3,
       });
+
       mapRef.current = map;
+
       map.once("load", () => {
-        map.addSource("issues", { type: "geojson", data });
+        map.addSource("issues", {
+          type: "geojson",
+          data,
+        });
+
+        // 🔵 General Pollution Circle Layer (User Requested Style)
         map.addLayer({
-          id: "heatmap",
-          type: "heatmap",
+          id: "pollution-circles",
+          type: "circle",
           source: "issues",
           paint: {
-            "heatmap-weight": ["get", "severity"],
-            "heatmap-intensity": 1,
-            "heatmap-radius": 30,
-            "heatmap-opacity": 1,
-            "heatmap-color": [
-              "interpolate", ["linear"], ["heatmap-density"],
-              0, "rgba(245, 245, 220, 0)",
-              0.25, "rgba(245, 245, 220, 0.5)",
-              0.5, "rgba(127, 149, 117, 0.6)",
-              0.75, "rgba(63, 113, 75, 0.75)",
-              1, "rgba(63, 113, 75, 0.9)",
+            "circle-radius": [
+              "interpolate",
+              ["linear"],
+              ["get", "severity"],
+              0, 5,
+              0.25, 12,
+              0.5, 20,
+              0.75, 30,
+              1, 45,
             ],
+
+            "circle-color": [
+              "interpolate",
+              ["linear"],
+              ["get", "severity"],
+              0, "#2ecc71",
+              0.25, "#f1c40f",
+              0.5, "#e67e22",
+              0.75, "#e74c3c",
+              1, "#7f0000",
+            ],
+
+            "circle-opacity": 0.75,
+            "circle-stroke-width": 1,
+            "circle-stroke-color": "#ffffff",
           },
         });
-        map.on("mousemove", "heatmap", (e) => {
-          const features = map.queryRenderedFeatures(e.point, { layers: ["heatmap"] });
-          if (features.length) {
-            map.getCanvas().style.cursor = "pointer";
-            const feature = features[0];
-            const props = feature.properties || {};
-            setHoverInfo({
-              category: props.category || "air_pollution",
-              severity: props.severity != null ? (props.severity * 100).toFixed(1) : "—",
-              coordinates: feature.geometry?.coordinates || [],
-            });
-          }
+
+        // Cursor pointer
+        map.on("mouseenter", "pollution-circles", () => {
+          map.getCanvas().style.cursor = "pointer";
         });
-        map.on("mouseleave", "heatmap", () => {
+
+        map.on("mouseleave", "pollution-circles", () => {
           map.getCanvas().style.cursor = "";
-          setHoverInfo(null);
+        });
+
+        // Click popup with Breakdown
+        map.on("click", "pollution-circles", (e) => {
+          const feature = e.features[0];
+          const props = feature.properties;
+
+          // Parse values for display
+          const air = (props.air_pollution * 100).toFixed(1);
+          const land = (props.land_pollution * 100).toFixed(1);
+          const water = (props.water_pollution * 100).toFixed(1);
+          const general = (props.general_severity * 100).toFixed(1);
+
+          new mapboxgl.Popup()
+            .setLngLat(feature.geometry.coordinates)
+            .setHTML(`
+              <div style="font-family: sans-serif; min-width: 200px;">
+                <h3 style="margin: 0 0 8px 0;">Pollution Details</h3>
+                <p style="margin: 4px 0;"><strong>General Severity:</strong> ${general}%</p>
+                <div style="margin-top: 8px; font-size: 0.9em; border-top: 1px solid #eee; padding-top: 4px;">
+                    <p style="margin: 2px 0;"><strong>Air:</strong> ${air}%</p>
+                    <p style="margin: 2px 0;"><strong>Land:</strong> ${land}% (est)</p>
+                    <p style="margin: 2px 0;"><strong>Water:</strong> ${water}% (est)</p>
+                </div>
+                <p style="margin-top: 8px; font-size: 0.8em; color: #666;">
+                  <strong>Category:</strong> ${props.category || "N/A"}
+                </p>
+              </div>
+            `)
+            .addTo(map);
         });
       });
     };
+
     initMap();
+
     return () => {
       if (mapRef.current) {
         mapRef.current.remove();
@@ -85,46 +166,34 @@ export default function MapPage() {
     };
   }, [data]);
 
+  // 🛑 Token missing
   if (!MAPBOX_TOKEN) {
     return (
-      <div style={{ padding: "2rem", fontFamily: "sans-serif", background: "#F5F5DC", minHeight: "100vh", color: "#3F714B" }}>
-        <h2>Missing Mapbox token</h2>
-        <p>Add <code>NEXT_PUBLIC_MAPBOX_TOKEN</code> to <code>fe/.env.local</code></p>
-        <p><Link href="/">← Back to home</Link></p>
+      <div style={{ padding: "2rem" }}>
+        <h2>Missing Mapbox Token</h2>
+        <p>Add NEXT_PUBLIC_MAPBOX_TOKEN to fe/.env.local</p>
+        <Link href="/">← Home</Link>
       </div>
     );
   }
 
+  // 🛑 Backend error
   if (error) {
     return (
-      <div style={{ padding: "2rem", fontFamily: "sans-serif", background: "#F5F5DC", minHeight: "100vh", color: "#3F714B" }}>
-        <h2>Failed to load data</h2>
-        <p>Ensure backend is running: <code>cd be && uvicorn main:app --reload --port 8000</code></p>
-        <p style={{ color: "#c00" }}>{error}</p>
-        <p><Link href="/">← Back to home</Link></p>
+      <div style={{ padding: "2rem" }}>
+        <h2>Backend Error</h2>
+        <p>{error}</p>
+        <Link href="/">← Home</Link>
       </div>
     );
   }
 
   return (
-    <div style={{ display: "flex", height: "100vh", width: "100%", background: "#F5F5DC", fontFamily: "system-ui, -apple-system, sans-serif" }}>
-      <div ref={mapContainerRef} style={{ flex: 1, minHeight: 0, minWidth: 0 }} />
-      <div style={{ flex: "0 0 280px", padding: "1rem", borderLeft: "1px solid rgba(63, 113, 75, 0.3)", background: "#F5F5DC", overflow: "auto", color: "#3F714B" }}>
-        <div style={{ marginBottom: "1rem" }}>
-          <Link href="/" style={{ fontSize: "0.9rem", color: "#3F714B" }}>← Home</Link>
-        </div>
-        <h3 style={{ marginTop: 0, fontWeight: 600 }}>Air quality (OpenAQ)</h3>
-        {!data && <p>Loading…</p>}
-        {data && hoverInfo ? (
-          <>
-            <p><strong>Category:</strong> {hoverInfo.category}</p>
-            <p><strong>Severity:</strong> {hoverInfo.severity}%</p>
-            <p><strong>Coordinates:</strong> {hoverInfo.coordinates.join(", ")}</p>
-          </>
-        ) : data ? (
-          <p>Hover over the heatmap to see details</p>
-        ) : null}
-      </div>
+    <div style={{ height: "100vh", width: "100%" }}>
+      <div
+        ref={mapContainerRef}
+        style={{ width: "100%", height: "100%" }}
+      />
     </div>
   );
 }
