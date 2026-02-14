@@ -1,12 +1,14 @@
 "use client";
 import Image from "next/image";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function Home() {
   const [showLeaf1, setShowLeaf1] = useState(false);
   const [showLeaf2, setShowLeaf2] = useState(false);
   const [showText, setShowText] = useState(false);
   const [animateUp, setAnimateUp] = useState(false); // State to control upward animation
+  const router = useRouter();
 
   useEffect(() => {
     setTimeout(() => setShowLeaf1(true), 200);
@@ -17,9 +19,24 @@ export default function Home() {
 
   return (
     <div
-      className="min-h-screen w-full relative"
+      className="min-h-screen w-full relative flex items-center justify-center"
       style={{ background: "#0f240e" }}
     >
+      {/* Placeholder button, only visible after animation */}
+      {animateUp && (
+        <button
+          className="px-8 py-4 rounded-lg bg-white text-green-900 text-xl font-bold shadow-lg transition hover:bg-green-100 z-10"
+          style={{
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+          }}
+          onClick={() => router.push("/dashboard")}
+        >
+          to dashboard (placeholder)
+        </button>
+      )}
       {/* Animated landing overlay (beige paper) */}
       <div
         className="flex min-h-screen items-center justify-center font-sans relative"
