@@ -10,8 +10,9 @@ import re
 from pathlib import Path
 
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, UploadFile, File
 from fastapi.responses import PlainTextResponse
+from fastapi.middleware.cors import CORSMiddleware
 from llama_cloud import AsyncLlamaCloud
 from llama_index.core import Document, VectorStoreIndex, Settings
 from llama_index.embeddings.google_genai import GoogleGenAIEmbedding
@@ -26,6 +27,13 @@ load_dotenv()
 LLAMA_API_KEY = os.getenv("LLAMA_CLOUD_API_KEY") or os.getenv("llamaparse_api_key")
 
 app = FastAPI(title="LlamaParse + Contract Scoring", version="0.2.0")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 logger = logging.getLogger("parsing_agent")
 
 # In-memory state: last parsed markdown and vector index (for retrieval only)
@@ -160,7 +168,23 @@ Famous Greenwashing Cases:
 - Meta/Google's carbon neutral claims excluding Scope 3 supply chain emissions
 - Nestlé's "carbon neutral" coffee claims based on offset schemes
 - H&M's "Conscious Collection" sustainability line with vague sustainability claims
--fast fashion industry's "recycling" programs with low actual recycling rates
+- Fast fashion industry's "recycling" programs with low actual recycling rates
+- Coca-Cola's "World Without Waste" pledges while remaining the world's largest plastic polluter and fighting binding plastic regulations
+- Starbucks' "strawless lids" rollout that actually used more plastic by weight than the previous straw + lid combo
+- IKEA's "sustainable wood" sourcing while independent investigations linked products to illegal logging certified as "responsible" by FSC
+- Delta's "first carbon neutral airline" claim later challenged as misleading because it relied heavily on low-quality offsets
+- Ryanair's "Europe's lowest emissions airline" ads banned by regulators as misleading environmental claims
+- HSBC's "financing the transition" climate ads banned for highlighting green investments while omitting ongoing large fossil fuel financing
+- Quorn's "low carbon footprint" product marketing found misleading due to unverifiable carbon claims
+- Hefty's "recycling" trash bags marketed as environmentally friendly despite not being accepted in most recycling systems
+- Bottled water brands touting "eco-friendly caps" while the bottles and caps remain conventional single-use plastic
+- Apparel brands (Nike, Superdry, Lacoste) running performance ads around "sustainable" lines with vague criteria and no full lifecycle data
+- Shein's "long-term sustainability goals" and "social responsibility" pages with minimal transparency on supplier audits and overproduction
+- Bank "sustainable investing" funds (e.g., Active Super) that quietly hold fossil fuels, tobacco, and other excluded sectors while marketing as climate-aligned
+- Airports promoting "carbon neutral growth" for new terminals while ignoring induced flight emissions and focusing only on building operations
+- Meat producers (e.g., Danish Crown) branding pork as "climate controlled" or "climate improved" despite marginal changes and ongoing high emissions
+- Utilities (e.g., Anglian Water) highlighting river restoration projects while downplaying sewage pollution and regulatory violations
+
 
 Common Loopholes to Detect:
 - "We aim to..." / "We seek to..." / "Our goal is to..." without concrete targets
@@ -177,6 +201,18 @@ Common Loopholes to Detect:
 - "Carbon intensity" metrics instead of absolute emissions
 - "Year-over-year improvement" ignoring absolute growth
 - "Industry-leading" with no verifiable benchmarks
+- "Natural" / "eco-friendly" / "green" labels with no standardized definition or third-party verification
+- Highlighting one "green" feature (e.g., lighter packaging) while ignoring overall lifecycle impacts like energy use and end-of-life waste
+- Comparing products to a worse baseline ("40% greener than our old model") without disclosing absolute impact
+- "Up to X% electric driving" style claims that describe best-case lab conditions, not typical real-world use
+- "Sustainability" ads that focus on tiny low-carbon product lines while the core business model remains high-emissions (classic greenlighting)
+- Constantly "updating" or "aligning" targets with new methodologies to avoid ever being measured against a fixed goal (greenrinsing)
+- Corporate silence on key metrics ("we do not yet report Scope 3 due to data challenges") used as a long-term shield (greenhushing)
+- Shifting responsibility to consumers ("it's up to you to recycle/offset") instead of addressing production emissions (greenshifting)
+- Hiding behind industry initiatives ("as part of the XYZ Alliance we are committed to…") without disclosing individual performance (greencrowding)
+- Packaging that uses earth tones, leaves, or faux-certification seals to imply environmental benefits that don't exist (greenlabelling)
+- Emphasis on carbon intensity per unit (per passenger-km, per product) while total absolute emissions continue to rise
+- One-off pilot projects (e.g., a single "net zero" store or flight) heavily marketed as if they represent the whole company's operations
 
 Company-Specific Patterns:
 - Oil & Gas: Scope 3 exclusion, "transition" language, offset reliance
@@ -258,9 +294,13 @@ Be skeptical, analytical, and investor-focused.
 
 
 @app.post("/parse", response_class=PlainTextResponse)
-async def parse_document():
+async def parse_document(file: UploadFile | None = File(None)):
     """
-    Parse the mock ESG report document with LlamaParse (Llama Cloud).
+    Parse an ESG report document with LlamaParse (Llama Cloud).
+    
+    If a file is uploaded, it will be parsed.
+    Otherwise, defaults to the local ESG Report.pdf.
+    
     Returns the parsed markdown and builds a vector index for later scoring.
     """
     if not LLAMA_API_KEY:
@@ -269,9 +309,16 @@ async def parse_document():
             detail="Set LLAMA_CLOUD_API_KEY or llamaparse_api_key in .env",
         )
 
-    path = Path(__file__).resolve().parent / "ESG Report.pdf"
-    if not path.is_file():
-        raise HTTPException(status_code=400, detail=f"File not found: {path}")
+    if file and file.filename:
+        temp_dir = Path(__file__).resolve().parent / ".tmp_uploads"
+        temp_dir.mkdir(exist_ok=True)
+        path = temp_dir / file.filename
+        content = await file.read()
+        path.write_bytes(content)
+    else:
+        path = Path(__file__).resolve().parent / "ESG Report.pdf"
+        if not path.is_file():
+            raise HTTPException(status_code=400, detail=f"File not found: {path}")
 
     try:
         async with AsyncLlamaCloud(api_key=LLAMA_API_KEY) as client:
