@@ -1,0 +1,7 @@
+llama-cloud>=1.0
+fastapi
+python-dotenv
+uvicorn
+llama-index-core
+llama-index-llms-openai
+llama-index-embeddings-openai
