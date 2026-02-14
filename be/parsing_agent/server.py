@@ -55,7 +55,7 @@ async def _get_test_investor():
     """Get the test investor from MongoDB, caching in memory."""
     global _test_investor
     if _test_investor is None:
-        _test_investor = await investor_collection.find_one({"_id": "test_user"})
+        _test_investor = await investor_collection.find_one({"_id": "65d4f1a8c9b3a71234abcd01"})
     return _test_investor
 
 
@@ -460,7 +460,7 @@ async def score_contract():
 
     chunks_text = "\n\n---\n\n".join(chunks)
     goals_text = "\n".join(f"- {g}" for g in investor_goals)
-    prompt = SCORE_PROMPT_TEMPLATE.format(chunks_text=chunks_text, goals_text=goals_text)
+    prompt = SCORE_PROMPT_TEMPLATE.replace("{chunks_text}", chunks_text).replace("{goals_text}", goals_text)
 
     try:
         response = await llm.acomplete(prompt)
