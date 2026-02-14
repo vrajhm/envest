@@ -12,8 +12,8 @@ from fastapi import FastAPI, HTTPException, UploadFile, File, Form
 from fastapi.responses import PlainTextResponse
 from llama_cloud import AsyncLlamaCloud
 from llama_index.core import Document, VectorStoreIndex, Settings
-from llama_index.embeddings.openai import OpenAIEmbedding
-from llama_index.llms.openai import OpenAI
+from llama_index.embeddings.gemini import GeminiEmbedding
+from llama_index.llms.google_genai import GoogleGenAI
 from pydantic import BaseModel
 import uvicorn
 
@@ -33,18 +33,18 @@ DEFAULT_TOP_K = 15
 
 
 def _get_llm():
-    """Build LLM from env. Uses OpenAI if OPENAI_API_KEY is set."""
-    api_key = os.getenv("OPENAI_API_KEY")
+    """Build LLM from env. Uses Gemini if GOOGLE_API_KEY is set."""
+    api_key = os.getenv("GOOGLE_API_KEY")
     if not api_key:
         return None
-    return OpenAI(model="gpt-4o-mini", api_key=api_key)
+    return GoogleGenAI(model="gemini-2.0-flash", api_key=api_key)
 
 
 def _get_embed_model():
-    api_key = os.getenv("OPENAI_API_KEY")
+    api_key = os.getenv("GOOGLE_API_KEY")
     if not api_key:
         return None
-    return OpenAIEmbedding(api_key=api_key)
+    return GeminiEmbedding(model_name="gemini-embedding-001", api_key=api_key)
 
 
 def _build_vector_index(markdown: str) -> VectorStoreIndex | None:
@@ -182,7 +182,7 @@ async def score_contract(body: ScoreBody):
     """
     Score the last parsed contract against investor goals.
     Uses one retrieval over the document (top-k chunks for all goals), then an LLM to produce a trust score.
-    Requires OPENAI_API_KEY. Call POST /parse first.
+    Requires GOOGLE_API_KEY. Call POST /parse first.
     """
     if not _last_markdown:
         raise HTTPException(
@@ -204,14 +204,14 @@ async def score_contract(body: ScoreBody):
     if not chunks:
         raise HTTPException(
             status_code=503,
-            detail="Vector index unavailable. Set OPENAI_API_KEY and call POST /parse again.",
+            detail="Vector index unavailable. Set GOOGLE_API_KEY and call POST /parse again.",
         )
 
     llm = _get_llm()
     if not llm:
         raise HTTPException(
             status_code=503,
-            detail="Set OPENAI_API_KEY in .env to use the score endpoint.",
+            detail="Set GOOGLE_API_KEY in .env to use the score endpoint.",
         )
 
     chunks_text = "\n\n---\n\n".join(chunks)
@@ -242,7 +242,7 @@ def health():
     return {
         "ok": True,
         "llama_configured": bool(LLAMA_API_KEY),
-        "openai_configured": bool(os.getenv("OPENAI_API_KEY")),
+        "google_configured": bool(os.getenv("GOOGLE_API_KEY")),
     }
 
 
