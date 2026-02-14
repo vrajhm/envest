@@ -7,36 +7,111 @@ export default function Home() {
   const [showLeaf1, setShowLeaf1] = useState(false);
   const [showLeaf2, setShowLeaf2] = useState(false);
   const [showText, setShowText] = useState(false);
-  const [animateUp, setAnimateUp] = useState(false); // State to control upward animation
+  const [animateUp, setAnimateUp] = useState(false);
+  const [tabAnimateUp, setTabAnimateUp] = useState(false);
+  const [showBgImage, setShowBgImage] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
     setTimeout(() => setShowLeaf1(true), 200);
     setTimeout(() => setShowLeaf2(true), 800);
     setTimeout(() => setShowText(true), 1500);
-    setTimeout(() => setAnimateUp(true), 2200);
+    setTimeout(() => setAnimateUp(true), 2400);
+    // Animate tab upward after main animation completes
+    setTimeout(() => setTabAnimateUp(true), 3800);
+    // Fade in background image after animation completes
+    setTimeout(() => setShowBgImage(true), 2600);
   }, []);
 
   return (
     <div
       className="min-h-screen w-full relative flex items-center justify-center"
-      style={{ background: "#0f240e" }}
+      style={{ background: "#0f240e", overflow: "hidden" }}
     >
-      {/* Placeholder button, only visible after animation */}
+      {/* Background image at the back */}
+      <div
+        style={{
+          position: "fixed",
+          inset: 0,
+          zIndex: 0,
+          backgroundImage: 'url("/background.png")',
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+        }}
+      />
+      {/* Muting overlay above background image */}
+      <div
+        style={{
+          position: "fixed",
+          inset: 0,
+          zIndex: 0.5,
+          background: "rgba(24, 36, 20, 0.62)",
+          pointerEvents: "none",
+        }}
+      />
+      {/* Vertical gradient mask from green to transparent */}
+      <div
+        style={{
+          position: "fixed",
+          inset: -20,
+          zIndex: 2,
+          pointerEvents: "none",
+          background:
+            "linear-gradient(to bottom, rgb(56, 58, 45) 0%, rgb(56, 58, 45) 2%, rgba(56,58,45,0.7) 8%, rgba(56,58,45,0.0) 20%, rgba(56,58,45,0.0) 80%, rgba(56,58,45,0.7) 92%, rgb(56, 58, 45) 98%, rgb(56, 58, 45) 100%)",
+        }}
+      />
+      {/* Large centered Playfair Display text after animation */}
+      {/* Large centered Playfair Display text after animation */}
       {animateUp && (
         <button
-          className="px-8 py-4 rounded-lg bg-white text-green-900 text-xl font-bold shadow-lg transition hover:bg-green-100 z-10"
+          onClick={() => router.push("/dashboard")}
           style={{
             position: "absolute",
             top: "50%",
             left: "50%",
-            transform: "translate(-50%, -50%)",
+            zIndex: 10,
+            textAlign: "center",
+            width: "100vw",
+            background: "none",
+            border: "none",
+            padding: 0,
+            cursor: "pointer",
+            animation: "pulse 4s ease-in-out infinite",
           }}
-          onClick={() => router.push("/dashboard")}
         >
-          to dashboard (placeholder)
+          <span
+            style={{
+              fontFamily: "Playfair Display, serif",
+              fontWeight: 700,
+              fontStyle: "italic",
+              fontSize: "6.5rem",
+              color: "rgb(237, 243, 189)",
+              letterSpacing: "-0.08em",
+              display: "block",
+              marginLeft: "-4vw",
+              lineHeight: 1,
+            }}
+          >
+            conscious
+          </span>
+          <span
+            style={{
+              fontFamily: "Playfair Display, serif",
+              fontWeight: 400,
+              fontStyle: "normal",
+              fontSize: "6rem",
+              color: "rgb(237, 243, 189)",
+              letterSpacing: "-0.03em",
+              display: "block",
+              marginRight: "-10.5vw",
+              lineHeight: 1,
+              marginTop: "-1.7rem",
+            }}
+          >
+            investing
+          </span>
         </button>
-      )}
+      )}{" "}
       {/* Animated landing overlay (beige paper) */}
       <div
         className="flex min-h-screen items-center justify-center font-sans relative"
@@ -45,22 +120,21 @@ export default function Home() {
           inset: 0,
           zIndex: 10,
           background: "rgb(217, 205, 183)",
-          transition: "transform 1s cubic-bezier(0.77,0,0.175,1)",
+          transition: "transform 1.2s cubic-bezier(0.77,0,0.175,1)",
           transform: animateUp ? "translateY(-100%)" : "translateY(0)",
+          borderBottomLeftRadius: 24,
+          borderBottomRightRadius: 24,
         }}
       >
-        {/* Folder tab */}
+        {/* Reveal tab below indent */}
         <div
-          className="fixed bottom-0 right-0 z-20 pointer-events-none"
+          className={`fixed bottom-0 right-0 z-20 pointer-events-auto`}
           style={{
             width: 300,
-            height: 70,
-            background: "#b6a899",
+            height: 50,
+            background: "#9e8d75",
             borderRadius: "12px 0 0 0",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            marginTop: -1,
+            marginBottom: 0,
           }}
         >
           {/* Crinkle overlay for folder tab */}
@@ -94,6 +168,43 @@ export default function Home() {
               gap: 6,
             }}
           ></span>
+        </div>
+        {/* Folder tab revealed as beige moves up */}
+        {/* Show tab before and during animation, hide after animation completes */}
+        <div
+          className="fixed right-0 z-30 pointer-events-none"
+          style={{
+            width: 300,
+            height: 50,
+            background: "rgb(217, 205, 183)",
+            borderRadius: "0 0 12px 12px",
+            display: "flex",
+            alignItems: "right",
+            justifyContent: "right",
+            top: tabAnimateUp ? "calc(100vh - 100px)" : "100vh",
+            transition: "top 0.5s cubic-bezier(0.77,0,0.175,1)", // match max velocity
+            boxShadow: "0 2px 8px rgba(20,54,17,0.08)",
+          }}
+        >
+          {/* Crinkle overlay for folder tab */}
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              pointerEvents: "none",
+              zIndex: 0,
+              borderRadius: "0 0 12px 12px",
+              overflow: "hidden",
+            }}
+          >
+            <Image
+              src="/crinkle.png"
+              alt="Crinkle overlay"
+              fill
+              style={{ objectFit: "cover", opacity: 0.2 }}
+              priority
+            />
+          </div>
         </div>
         {/* Crinkle overlay */}
         <div className="fixed inset-0 pointer-events-none z-0">
