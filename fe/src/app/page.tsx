@@ -108,23 +108,25 @@ export default function Home() {
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-row items-center justify-center gap-0 z-10">
           <span
             style={{
-              fontFamily: "Montserrat, Arial, Helvetica, sans-serif",
-              fontWeight: 900,
-              fontSize: 96,
+              fontFamily: "Playfair Display, serif",
+              fontWeight: 400,
+              fontSize: 128,
               letterSpacing: "0.15em",
               transition: "opacity 0.7s",
               opacity: showText ? 1 : 0,
               color: "#143611",
               textShadow: "0 0 2px #0a2108, 0 0 1px #0a2108",
+              marginRight: "-56px",
+              marginTop: "-32px",
             }}
             className="select-none"
           >
-            EN
+            en
           </span>
-          <div className="flex flex-col items-center justify-center -mx-10">
+          <div className="flex flex-col items-center justify-center">
             <div className="relative h-[260px] w-[260px] flex items-center justify-center">
               <Image
-                src="/leaf1.png"
+                src="/leaf3.png"
                 alt="Leaf 1"
                 width={260}
                 height={260}
@@ -132,7 +134,7 @@ export default function Home() {
                 priority
               />
               <Image
-                src="/leaf2.png"
+                src="/leaf4.png"
                 alt="Leaf 2"
                 width={260}
                 height={260}
@@ -143,19 +145,20 @@ export default function Home() {
           </div>
           <span
             style={{
-              fontFamily: "Montserrat, Arial, Helvetica, sans-serif",
-              fontWeight: 900,
-              fontSize: 96,
+              fontFamily: "Playfair Display, serif",
+              fontWeight: 400,
+              fontSize: 128,
               letterSpacing: "0.15em",
               transition: "opacity 0.7s",
               opacity: showText ? 1 : 0,
-              marginLeft: "-8px",
+              marginLeft: "-48px",
+              marginTop: "-32px",
               color: "#143611",
               textShadow: "0 0 2px #0a2108, 0 0 1px #0a2108",
             }}
             className="select-none"
           >
-            EST
+            est
           </span>
         </div>
       </div>
