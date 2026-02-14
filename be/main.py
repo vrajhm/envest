@@ -27,6 +27,7 @@ collection = db["investor_preferences"]
 # Data Model
 # -------------------------
 class InvestorPreference(BaseModel):
+    company_name: str = ""
     investment_amount: str
     climate_concerns: list[str]
     location: str
@@ -37,6 +38,7 @@ class InvestorPreference(BaseModel):
 @app.post("/submit-preferences")
 def submit_preferences(data: InvestorPreference):
     document = {
+        "company_name": data.company_name,
         "investment_amount": data.investment_amount,
         "climate_concerns": data.climate_concerns,
         "location": data.location,
