@@ -2,11 +2,14 @@
 LlamaParse + scoring: parse climate contracts, then score alignment with investor goals.
 Uses vector retrieval (top-k chunks) to avoid sending the full document to the LLM.
 """
+from __future__ import annotations
+
 import asyncio
 import json
 import logging
 import os
 import re
+import sys
 from datetime import datetime
 from pathlib import Path
 
@@ -14,11 +17,28 @@ from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, UploadFile, File
 from fastapi.responses import PlainTextResponse
 from fastapi.middleware.cors import CORSMiddleware
-from llama_cloud import AsyncLlamaCloud
-from llama_index.core import Document, VectorStoreIndex, Settings
-from llama_index.embeddings.google_genai import GoogleGenAIEmbedding
-from llama_index.llms.google_genai import GoogleGenAI
-from motor.motor_asyncio import AsyncIOMotorClient
+import httpx
+
+try:
+    from llama_cloud import AsyncLlamaCloud
+except ImportError:  # pragma: no cover
+    AsyncLlamaCloud = None  # type: ignore[assignment]
+
+try:
+    from llama_index.core import Document, VectorStoreIndex, Settings
+    from llama_index.embeddings.google_genai import GoogleGenAIEmbedding
+    from llama_index.llms.google_genai import GoogleGenAI
+except ImportError:  # pragma: no cover
+    Document = None  # type: ignore[assignment]
+    VectorStoreIndex = None  # type: ignore[assignment]
+    Settings = None  # type: ignore[assignment]
+    GoogleGenAIEmbedding = None  # type: ignore[assignment]
+    GoogleGenAI = None  # type: ignore[assignment]
+
+try:
+    from motor.motor_asyncio import AsyncIOMotorClient
+except ImportError:  # pragma: no cover
+    AsyncIOMotorClient = None  # type: ignore[assignment]
 from pydantic import BaseModel
 import uvicorn
 
@@ -26,7 +46,15 @@ import uvicorn
 load_dotenv(Path(__file__).resolve().parent / ".env")
 load_dotenv()
 
+# Make be/rag_agent importable so we can reuse the existing RAG routers/services
+RAG_AGENT_DIR = Path(__file__).resolve().parents[1] / "rag_agent"
+if str(RAG_AGENT_DIR) not in sys.path:
+    sys.path.insert(0, str(RAG_AGENT_DIR))
+
 LLAMA_API_KEY = os.getenv("LLAMA_CLOUD_API_KEY") or os.getenv("llamaparse_api_key")
+RAG_BASE_URL = os.getenv("RAG_BASE_URL", "http://127.0.0.1:8000")
+RAG_LOAD_TIMEOUT_SECONDS = float(os.getenv("RAG_LOAD_TIMEOUT_SECONDS", "30"))
+CACHE_DIR = Path(__file__).resolve().parent / "cache"
 
 app = FastAPI(title="LlamaParse + Contract Scoring", version="0.2.0")
 app.add_middleware(
@@ -38,14 +66,54 @@ app.add_middleware(
 )
 logger = logging.getLogger("parsing_agent")
 
+try:
+    from app.api.routes.simple import router as rag_simple_router
+    from app.api.routes.reviews import router as rag_reviews_router
+    from app.services.container import build_services as build_rag_services
+
+    RAG_MERGE_AVAILABLE = True
+except Exception as exc:  # pragma: no cover
+    rag_simple_router = None  # type: ignore[assignment]
+    rag_reviews_router = None  # type: ignore[assignment]
+    build_rag_services = None  # type: ignore[assignment]
+    RAG_MERGE_AVAILABLE = False
+    logger.warning("RAG merge unavailable: %s", exc)
+
+if RAG_MERGE_AVAILABLE:
+    app.include_router(rag_simple_router, prefix="/v1", tags=["rag"])
+    app.include_router(rag_reviews_router, prefix="/v1/reviews", tags=["rag-reviews"])
+
+
+@app.on_event("startup")
+async def startup_rag_services() -> None:
+    if not RAG_MERGE_AVAILABLE:
+        return
+    services = build_rag_services()
+    app.state.services = services
+    await services.vector_store.connect()
+    await services.vector_store.ensure_collections()
+    logger.info("RAG routes mounted into parsing server")
+
+
+@app.on_event("shutdown")
+async def shutdown_rag_services() -> None:
+    services = getattr(app.state, "services", None)
+    if services is None:
+        return
+    await services.vector_store.close()
+
 # MongoDB connection
-mongo_client = AsyncIOMotorClient(
-    os.getenv("MONGO_URI"),
-    tls=True,
-    tlsAllowInvalidCertificates=True
-)
-db = mongo_client["climate_investor_db"]
-investor_collection = db["investor_preferences"]
+if AsyncIOMotorClient is not None:
+    mongo_client = AsyncIOMotorClient(
+        os.getenv("MONGO_URI"),
+        tls=True,
+        tlsAllowInvalidCertificates=True
+    )
+    db = mongo_client["climate_investor_db"]
+    investor_collection = db["investor_preferences"]
+else:  # pragma: no cover
+    mongo_client = None
+    investor_collection = None
 
 # Cached test investor
 _test_investor = None
@@ -54,6 +122,8 @@ _test_investor = None
 async def _get_test_investor():
     """Get the test investor from MongoDB, caching in memory."""
     global _test_investor
+    if investor_collection is None:
+        raise HTTPException(status_code=503, detail="motor/mongodb client not installed")
     if _test_investor is None:
         _test_investor = await investor_collection.find_one({"_id": "65d4f1a8c9b3a71234abcd01"})
     return _test_investor
@@ -79,14 +149,14 @@ DEFAULT_TOP_K = 15
 def _get_llm():
     """Build LLM from env. Uses Gemini if GOOGLE_API_KEY is set."""
     api_key = os.getenv("GOOGLE_API_KEY")
-    if not api_key:
+    if not api_key or GoogleGenAI is None:
         return None
     return GoogleGenAI(model="models/gemini-2.0-flash", api_key=api_key)
 
 
 def _get_embed_model():
     api_key = os.getenv("GOOGLE_API_KEY")
-    if not api_key:
+    if not api_key or GoogleGenAIEmbedding is None:
         return None
     return GoogleGenAIEmbedding(model_name="gemini-embedding-001", api_key=api_key)
 
@@ -95,6 +165,8 @@ def _build_vector_index(markdown: str) -> VectorStoreIndex | None:
     """Chunk the markdown, embed, and build a vector index for retrieval only."""
     global _vector_index
     if not markdown.strip():
+        return None
+    if Document is None or VectorStoreIndex is None or Settings is None:
         return None
     embed = _get_embed_model()
     if not embed:
@@ -166,6 +238,10 @@ def _extract_markdown(result) -> tuple[str, str]:
 class ScoreBody(BaseModel):
     investor_goals: list[str] | None = None
     top_k: int | None = None
+
+
+class IngestBody(BaseModel):
+    use_cache_on_score_failure: bool = True
 
 
 SCORE_PROMPT_TEMPLATE = """You are a senior ESG disclosure analyst with expertise in investor-aligned reporting, greenwashing detection, regulatory scrutiny patterns, and historical ESG controversies.
@@ -326,6 +402,28 @@ Be skeptical, analytical, and investor-focused.
 """
 
 
+def _score_cache_path() -> Path:
+    return CACHE_DIR / "latest_score.json"
+
+
+def _write_score_cache(payload: dict) -> None:
+    CACHE_DIR.mkdir(parents=True, exist_ok=True)
+    wrapped = {"cached_at": datetime.utcnow().isoformat() + "Z", "payload": payload}
+    _score_cache_path().write_text(json.dumps(wrapped, ensure_ascii=False, indent=2), encoding="utf-8")
+
+
+def _read_score_cache() -> dict | None:
+    path = _score_cache_path()
+    if not path.exists():
+        return None
+    try:
+        wrapped = json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return None
+    payload = wrapped.get("payload")
+    return payload if isinstance(payload, dict) else None
+
+
 @app.post("/parse", response_class=PlainTextResponse)
 async def parse_document(file: UploadFile | None = File(None)):
     """
@@ -340,6 +438,11 @@ async def parse_document(file: UploadFile | None = File(None)):
         raise HTTPException(
             status_code=503,
             detail="Set LLAMA_CLOUD_API_KEY or llamaparse_api_key in .env",
+        )
+    if AsyncLlamaCloud is None:
+        raise HTTPException(
+            status_code=503,
+            detail="llama_cloud package not installed",
         )
 
     if file and file.filename:
@@ -474,11 +577,61 @@ async def score_contract():
                 continue
             if "similar_bad_examples" not in clause or not isinstance(clause["similar_bad_examples"], list):
                 clause["similar_bad_examples"] = []
+        _write_score_cache(result)
         return result
     except json.JSONDecodeError as e:
         raise HTTPException(status_code=502, detail=f"LLM did not return valid JSON: {e!s}")
     except Exception as e:
         raise HTTPException(status_code=502, detail=f"Score error: {e!s}")
+
+
+@app.post("/ingest")
+async def ingest_to_rag(body: IngestBody):
+    """
+    Minimal bridge endpoint:
+    1) get /score JSON (or fallback to cached latest score)
+    2) send directly to RAG /v1/context/load
+    """
+    score_source = "live"
+    try:
+        score_payload = await score_contract()
+    except HTTPException as exc:
+        if not body.use_cache_on_score_failure:
+            raise
+        cached = _read_score_cache()
+        if cached is None:
+            raise HTTPException(
+                status_code=exc.status_code,
+                detail={
+                    "error": "live_score_failed_and_no_cache",
+                    "score_error": exc.detail,
+                },
+            ) from exc
+        score_payload = cached
+        score_source = "cache"
+
+    rag_url = f"{RAG_BASE_URL}/v1/context/load"
+    try:
+        async with httpx.AsyncClient(timeout=RAG_LOAD_TIMEOUT_SECONDS) as client:
+            resp = await client.post(rag_url, json=score_payload)
+            resp.raise_for_status()
+            rag_response = resp.json()
+    except httpx.HTTPError as exc:
+        raise HTTPException(
+            status_code=502,
+            detail={
+                "error": "rag_context_load_failed",
+                "rag_url": rag_url,
+                "reason": str(exc),
+                "score_source": score_source,
+            },
+        ) from exc
+
+    return {
+        "ok": True,
+        "score_source": score_source,
+        "rag_response": rag_response,
+    }
 
 
 @app.get("/investor")
