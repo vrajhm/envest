@@ -4,6 +4,7 @@ import axios from "axios";
 export default function InvestorForm() {
   const [companyName, setCompanyName] = useState("");
   const [investmentAmount, setInvestmentAmount] = useState("");
+  const [riskTolerance, setRiskTolerance] = useState(5);
   const [climateConcerns, setClimateConcerns] = useState([]);
   const [location, setLocation] = useState("");
   const [suggestions, setSuggestions] = useState([]);
@@ -42,6 +43,7 @@ export default function InvestorForm() {
       await axios.post("http://localhost:8000/submit-preferences", {
         company_name: companyName,
         investment_amount: investmentAmount,
+        risk_tolerance: Number(riskTolerance),
         climate_concerns: climateConcerns,
         location: location
       });
@@ -104,6 +106,16 @@ export default function InvestorForm() {
             ))}
           </select>
 
+          <label style={labelStyle}>Risk Tolerance: {riskTolerance}/10</label>
+          <input
+            type="range"
+            min={1}
+            max={10}
+            value={riskTolerance}
+            onChange={(e) => setRiskTolerance(Number(e.target.value))}
+            style={{ ...inputStyle, accentColor: "#3F714B", padding: "8px 0", marginBottom: 8 }}
+          />
+
           <label style={{ ...labelStyle, marginTop: 8 }}>Climate Concerns</label>
           <div style={{ marginBottom: 20 }}>
             {concernOptions.map(concern => (
@@ -141,6 +153,8 @@ export default function InvestorForm() {
           >
             Submit
           </button>
+
+          
         </form>
       </div>
     </div>
