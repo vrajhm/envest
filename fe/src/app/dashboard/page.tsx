@@ -292,7 +292,12 @@ export default function Dashboard() {
               >
                 OVERALL SUSTAINABILITY TRUST RATING OF YOUR PORTFOLIO
               </div>
-              <div>{portfolioMetrics.average_climate_score}</div>
+              <div
+                className="w-full h-1/2 text-center text-[7rem] font-bold mt-auto flex items-center justify-center"
+                style={{ lineHeight: "0.9" }}
+              >
+                {portfolioMetrics.average_climate_score}
+              </div>
             </div>
 
             {/* Card 2 */}
@@ -312,7 +317,12 @@ export default function Dashboard() {
               >
                 HOLDINGS FLAGGED AS HIGH-RISK FOR GREENWASHING
               </div>
-              <div>{portfolioMetrics.high_risk_startups}</div>
+              <div
+                className="w-full h-1/2 text-center text-[7rem] font-bold mt-auto flex items-center justify-center"
+                style={{ lineHeight: "0.9" }}
+              >
+                {portfolioMetrics.high_risk_startups}
+              </div>
             </div>
 
             {/* Card 3 */}
@@ -332,7 +342,12 @@ export default function Dashboard() {
               >
                 COMBINED GREENWASHING PROBABILITY ACROSS YOUR PORTFOLIO
               </div>
-              <div>{portfolioMetrics.aggregate_greenwashing_risk}</div>
+              <div
+                className="w-full h-1/2 text-center text-[7rem] font-bold mt-auto flex items-center justify-center"
+                style={{ lineHeight: "0.9" }}
+              >
+                {portfolioMetrics.aggregate_greenwashing_risk}
+              </div>
             </div>
 
             {/* Card 4 */}
@@ -352,7 +367,12 @@ export default function Dashboard() {
               >
                 RISK-ADJUSTED RETURNS FACTORING CLIMATE AUTHENTICITY
               </div>
-              <div>{portfolioMetrics.climate_adjusted_return_index}</div>
+              <div
+                className="w-full h-1/2 text-center text-[7rem] font-bold mt-auto flex items-center justify-center"
+                style={{ lineHeight: "0.9" }}
+              >
+                {portfolioMetrics.climate_adjusted_return_index}
+              </div>
             </div>
           </div>
 
