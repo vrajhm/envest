@@ -5,7 +5,21 @@ import { useRouter } from "next/navigation";
 import { Smooch_Sans, Montserrat } from "next/font/google";
 import { Saira_Extra_Condensed } from "next/font/google";
 import { useEffect, useState } from "react";
-import { dashboardSeed, dashboardStartups } from "@/lib/dashboardData";
+import {
+  dashboardSeed,
+  dashboardStartups,
+  type DashboardStartupRow,
+} from "@/lib/dashboardData";
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 const montserrat = Montserrat({
   subsets: ["latin"],
@@ -19,14 +33,95 @@ const sairaExtraCondensed = Saira_Extra_Condensed({
 
 export default function Dashboard() {
   const [fadeIn, setFadeIn] = useState(false);
+  const [startups, setStartups] = useState<DashboardStartupRow[]>(dashboardStartups);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [startupNameInput, setStartupNameInput] = useState("");
+  const [startupSectorInput, setStartupSectorInput] = useState("");
+  const [startupLocationInput, setStartupLocationInput] = useState("");
+  const [isAddingStartup, setIsAddingStartup] = useState(false);
+  const [addStartupError, setAddStartupError] = useState<string | null>(null);
   const router = useRouter();
 
   useEffect(() => {
     setFadeIn(true);
   }, []);
 
-  const startups = dashboardStartups;
   const portfolioMetrics = dashboardSeed.portfolio_metrics;
+  const canAddStartup =
+    startupNameInput.trim().length > 0 &&
+    startupSectorInput.trim().length > 0 &&
+    startupLocationInput.trim().length > 0;
+
+  const resetStartupDialog = () => {
+    setStartupNameInput("");
+    setStartupSectorInput("");
+    setStartupLocationInput("");
+    setAddStartupError(null);
+  };
+
+  const handleAddStartup = async () => {
+    if (!canAddStartup || isAddingStartup) return;
+
+    setIsAddingStartup(true);
+    setAddStartupError(null);
+
+    try {
+      const response = await fetch("/api/dashboard/startups", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: startupNameInput.trim(),
+          sector: startupSectorInput.trim(),
+          location: startupLocationInput.trim(),
+        }),
+      });
+
+      const payload = (await response.json()) as {
+        error?: string;
+        startup?: {
+          startup_id: string;
+          name: string;
+          sector: string;
+          climate_trust: number;
+          greenwash_risk: number;
+          net_zero_cred: number;
+          confidence: number;
+          status: string;
+        };
+      };
+
+      if (!response.ok || !payload.startup) {
+        setAddStartupError(payload.error ?? "Failed to add startup.");
+        return;
+      }
+
+      const startup = payload.startup;
+      setStartups((current) => [
+        ...current,
+        {
+          startupId: startup.startup_id,
+          name: startup.name,
+          sector: startup.sector,
+          climateTrust: startup.climate_trust,
+          greenwashRisk: startup.greenwash_risk,
+          netZeroCred: startup.net_zero_cred,
+          confidence: startup.confidence,
+          status: startup.status,
+        },
+      ]);
+
+      const startupPath = `/${encodeURIComponent(startup.name.toLowerCase())}`;
+      resetStartupDialog();
+      setDialogOpen(false);
+      router.push(startupPath);
+    } catch {
+      setAddStartupError("Failed to add startup.");
+    } finally {
+      setIsAddingStartup(false);
+    }
+  };
 
   const handleRowClick = (startupName: string) => {
     router.push(`/${startupName.toLowerCase()}`);
@@ -101,24 +196,81 @@ export default function Dashboard() {
             your portfolio
           </div>
           <div className="mb-6 flex justify-end">
-            <Link
-              href="/add-startup"
-              className={`${montserrat.className} text-lg font-semibold`}
-              style={{
-                color: "rgb(237, 243, 189)",
-                letterSpacing: "0.04em",
-                textDecoration: "none",
-                transition: "transform 0.18s cubic-bezier(.4,1.3,.6,1)",
+            <AlertDialog
+              open={dialogOpen}
+              onOpenChange={(open) => {
+                setDialogOpen(open);
+                if (!open) resetStartupDialog();
               }}
-              onMouseEnter={(e) =>
-                (e.currentTarget.style.transform = "scale(1.09)")
-              }
-              onMouseLeave={(e) =>
-                (e.currentTarget.style.transform = "scale(1)")
-              }
             >
-              add startup →
-            </Link>
+              <AlertDialogTrigger asChild>
+                <button
+                  type="button"
+                  className={`${montserrat.className} text-lg font-semibold`}
+                  style={{
+                    color: "rgb(237, 243, 189)",
+                    letterSpacing: "0.04em",
+                    textDecoration: "none",
+                    transition: "transform 0.18s cubic-bezier(.4,1.3,.6,1)",
+                  }}
+                  onMouseEnter={(e) =>
+                    (e.currentTarget.style.transform = "scale(1.09)")
+                  }
+                  onMouseLeave={(e) =>
+                    (e.currentTarget.style.transform = "scale(1)")
+                  }
+                >
+                  add startup →
+                </button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Add startup?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Enter startup details to add it to your portfolio.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <div className="grid gap-3">
+                  <input
+                    type="text"
+                    value={startupNameInput}
+                    onChange={(e) => setStartupNameInput(e.target.value)}
+                    placeholder="Name"
+                    className={`${montserrat.className} h-10 border border-[rgb(85,81,46)] bg-[rgb(237,243,189)] px-3 text-[rgb(26,28,18)] outline-none`}
+                  />
+                  <input
+                    type="text"
+                    value={startupSectorInput}
+                    onChange={(e) => setStartupSectorInput(e.target.value)}
+                    placeholder="Sector"
+                    className={`${montserrat.className} h-10 border border-[rgb(85,81,46)] bg-[rgb(237,243,189)] px-3 text-[rgb(26,28,18)] outline-none`}
+                  />
+                  <input
+                    type="text"
+                    value={startupLocationInput}
+                    onChange={(e) => setStartupLocationInput(e.target.value)}
+                    placeholder="Location"
+                    className={`${montserrat.className} h-10 border border-[rgb(85,81,46)] bg-[rgb(237,243,189)] px-3 text-[rgb(26,28,18)] outline-none`}
+                  />
+                  {addStartupError && (
+                    <div className={`${montserrat.className} text-sm text-red-800`}>
+                      {addStartupError}
+                    </div>
+                  )}
+                </div>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <button
+                    type="button"
+                    onClick={handleAddStartup}
+                    disabled={!canAddStartup || isAddingStartup}
+                    className={`${montserrat.className} inline-flex h-10 items-center justify-center border border-[rgb(26,28,18)] px-4 text-sm font-medium uppercase tracking-wide text-[rgb(26,28,18)] transition hover:bg-[rgb(26,28,18)] hover:text-[rgb(237,243,189)] disabled:cursor-not-allowed disabled:opacity-60`}
+                  >
+                    {isAddingStartup ? "Adding..." : "Add startup"}
+                  </button>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </div>
           {/* 2x2 Cards Grid */}
           <div className="flex flex-row gap-6 mb-10 mt-9">
