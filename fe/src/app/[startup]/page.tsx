@@ -656,26 +656,7 @@ export default function StartupDetail() {
                       >
                         {statusMessage || "Analyzing ESG report..."}
                       </span>
-                      {phase === "analyzing" && (
-                        <div
-                          style={{
-                            position: "absolute",
-                            left: 0,
-                            right: 0,
-                            top: "50%",
-                            height: 2,
-                            background:
-                              "linear-gradient(90deg, transparent, rgb(20, 54, 17), transparent)",
-                            animation: "scan 2s ease-in-out infinite",
-                          }}
-                        />
-                      )}
-                      <style>{`
-                        @keyframes scan {
-                          0%, 100% { transform: translateX(-100%); }
-                          50% { transform: translateX(100%); }
-                        }
-                      `}</style>
+                      {/* Removed animated green bar during analyzing phase */}
                     </>
                   )}
                   {phase === "complete" && (
@@ -895,37 +876,37 @@ export default function StartupDetail() {
                     Upload a report to see goal analysis
                   </div>
                 ) : (
-                  <div className="h-[280px]">
+                  <div className="h-[240px]">
                     <ResponsiveContainer width="100%" height="100%">
                       <RadarChart
                         data={[
                           {
-                            subject: "Carbon",
+                            subject: "CARBON",
                             value: scoreData.goal_scores.carbon_reduction,
                             fullMark: 100,
                           },
                           {
-                            subject: "Renewable",
+                            subject: "RENEWABLE",
                             value: scoreData.goal_scores.renewable_energy,
                             fullMark: 100,
                           },
                           {
-                            subject: "Water",
+                            subject: "WATER",
                             value: scoreData.goal_scores.water_management,
                             fullMark: 100,
                           },
                           {
-                            subject: "Waste",
+                            subject: "WASTE",
                             value: scoreData.goal_scores.waste_reduction,
                             fullMark: 100,
                           },
                           {
-                            subject: "Social",
+                            subject: "SOCIAL",
                             value: scoreData.goal_scores.social_responsibility,
                             fullMark: 100,
                           },
                           {
-                            subject: "Governance",
+                            subject: "GOVERNANCE",
                             value: scoreData.goal_scores.governance,
                             fullMark: 100,
                           },
@@ -936,8 +917,9 @@ export default function StartupDetail() {
                           dataKey="subject"
                           tick={{
                             fill: "rgb(26, 28, 18)",
-                            fontSize: 11,
+                            fontSize: 13,
                             fontFamily: "Saira Extra Condensed",
+                            letterSpacing: 0.1,
                           }}
                         />
                         <PolarRadiusAxis
@@ -972,8 +954,8 @@ export default function StartupDetail() {
                     ANALYSIS SUMMARY
                   </div>
                   <p
-                    className="text-sm leading-relaxed"
-                    style={{ color: "rgb(60, 60, 50)" }}
+                    className="text-lg"
+                    style={{ color: "rgb(60, 60, 50)", lineHeight: 1.1 }}
                   >
                     {scoreData.syntax_notes}
                   </p>
@@ -1008,26 +990,26 @@ export default function StartupDetail() {
                         layout="vertical"
                         data={[
                           {
-                            name: "Greenwash Signals",
+                            name: "GREENWASH SIGNALS",
                             value:
                               scoreData.risk_indicators.greenwashing_signals,
                           },
                           {
-                            name: "Commitment Quality",
+                            name: "COMMITMENT QUALITY",
                             value:
                               scoreData.risk_indicators.commitment_specificity,
                           },
                           {
-                            name: "Accountability",
+                            name: "ACCOUNTABILITY",
                             value:
                               scoreData.risk_indicators.accountability_score,
                           },
                           {
-                            name: "Baseline Quality",
+                            name: "BASELINE QUALITY",
                             value: scoreData.risk_indicators.baseline_quality,
                           },
                           {
-                            name: "Timeline Clarity",
+                            name: "TIMELINE CLARITY",
                             value: scoreData.risk_indicators.timeline_clarity,
                           },
                         ]}
@@ -1039,10 +1021,11 @@ export default function StartupDetail() {
                           dataKey="name"
                           tick={{
                             fill: "rgb(26, 28, 18)",
-                            fontSize: 10,
+                            fontSize: 14,
                             fontFamily: "Saira Extra Condensed",
+                            letterSpacing: 0.1,
                           }}
-                          width={75}
+                          width={20}
                         />
                         <Bar dataKey="value" radius={[0, 4, 4, 0]}>
                           {[
@@ -1156,6 +1139,7 @@ export default function StartupDetail() {
                             style={{
                               color: "rgb(30, 30, 20)",
                               letterSpacing: "-0.02em",
+                              lineHeight: 1.1,
                             }}
                           >
                             {clause.clause_text}
@@ -1252,20 +1236,19 @@ export default function StartupDetail() {
                   </div>
                 ) : (
                   <div className="space-y-5">
-                    {/* Vulnerability Badge (symbol removed) */}
+                    {/* Vulnerability Score (no background, just text) */}
                     <div className="flex items-center gap-3">
-                      <div
-                        className="px-3 py-2 rounded-lg font-bold"
+                      <span
+                        className="font-bold"
                         style={{
-                          background: getVulnerabilityColor(
+                          color: getVulnerabilityColor(
                             selectedClause.vulnerability_score,
                           ),
-                          color: "white",
-                          fontSize: "1.1rem",
+                          fontSize: "1.7rem",
                         }}
                       >
-                        Vulnerability: {selectedClause.vulnerability_score}
-                      </div>
+                        VULNERABILITY: {selectedClause.vulnerability_score}
+                      </span>
                     </div>
 
                     {/* Vulnerable Text - More Prominent */}
@@ -1284,8 +1267,8 @@ export default function StartupDetail() {
                         }}
                       >
                         <p
-                          className="text-base font-medium leading-relaxed"
-                          style={{ color: "rgb(85, 81, 46)" }}
+                          className="text-base font-medium"
+                          style={{ color: "rgb(85, 81, 46)", lineHeight: 1.1 }}
                         >
                           {selectedClause.clause_text}
                         </p>
@@ -1303,8 +1286,8 @@ export default function StartupDetail() {
                       >
                         ANALYSIS
                         <p
-                          className="text-base font-medium leading-relaxed"
-                          style={{ color: "rgb(50, 50, 40)" }}
+                          className="text-base font-medium"
+                          style={{ color: "rgb(50, 50, 40)", lineHeight: 1.1 }}
                         >
                           {selectedClause.notes}
                         </p>
