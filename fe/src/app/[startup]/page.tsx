@@ -5,6 +5,7 @@ import { Montserrat } from "next/font/google";
 import { Saira_Extra_Condensed } from "next/font/google";
 import { useState, useRef } from "react";
 import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Cell } from "recharts";
+import { dashboardStartups } from "@/lib/dashboardData";
 
 const montserrat = Montserrat({
   subsets: ["latin"],
@@ -61,7 +62,11 @@ const API_BASE = "http://localhost:8000";
 
 export default function StartupDetail() {
   const params = useParams();
-  const startupName = params.startup;
+  const startupName = decodeURIComponent(params.startup as string);
+
+  const startupFromJson = dashboardStartups.find(s => 
+    s.startupId === startupName || s.name.toLowerCase() === startupName
+  );
 
   const startupData = {
     ecogen: {
@@ -410,7 +415,7 @@ export default function StartupDetail() {
     return "CRITICAL";
   };
 
-  if (!startup) {
+  if (!startup && !startupFromJson) {
     return <div>Startup not found</div>;
   }
 
@@ -476,7 +481,7 @@ export default function StartupDetail() {
               marginBottom: "2rem",
             }}
           >
-            {startup.name}
+            {startupFromJson?.name || startup?.name || "Startup"}
           </div>
 
           {/* Analysis Phase Indicator */}
