@@ -5,8 +5,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://127.0.0.1:8000";
-const ISSUES_URL = `${API_BASE_URL}/issues`;
+const ISSUES_URL = "/api/mapping/issues";
 
 /**
  * @typedef {Object} StartupItem
