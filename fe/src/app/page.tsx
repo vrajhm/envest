@@ -10,6 +10,7 @@ export default function Home() {
   const [animateUp, setAnimateUp] = useState(false);
   const [tabAnimateUp, setTabAnimateUp] = useState(false);
   const [showBgImage, setShowBgImage] = useState(false);
+  const [fadeOut, setFadeOut] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -23,10 +24,23 @@ export default function Home() {
     setTimeout(() => setShowBgImage(true), 2600);
   }, []);
 
+  const handleDashboardClick = () => {
+    setFadeOut(true);
+    setTimeout(() => {
+      router.push("/dashboard");
+    }, 700); // match transition duration
+  };
+
   return (
     <div
       className="min-h-screen w-full relative flex items-center justify-center"
-      style={{ background: "#0f240e", overflow: "hidden" }}
+      style={{
+        background: fadeOut ? "rgb(56, 58, 45)" : "#0f240e",
+        overflow: "hidden",
+        transition:
+          "background 0.7s cubic-bezier(.4,1.3,.6,1), opacity 0.7s cubic-bezier(.4,1.3,.6,1)",
+        opacity: fadeOut ? 0 : 1,
+      }}
     >
       {/* Small header top left */}
       <div
@@ -81,7 +95,7 @@ export default function Home() {
       {/* Large centered Playfair Display text after animation */}
       {animateUp && (
         <button
-          onClick={() => router.push("/dashboard")}
+          onClick={handleDashboardClick}
           style={{
             position: "absolute",
             textAlign: "center",
