@@ -1,15 +1,12 @@
 "use client";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Smooch_Sans, Montserrat } from "next/font/google";
+import { Montserrat } from "next/font/google";
 import { Saira_Extra_Condensed } from "next/font/google";
-import { useEffect, useState } from "react";
-<<<<<<< HEAD
+import { useState } from "react";
 import { dashboardSeed, dashboardStartups } from "@/lib/dashboardData";
-=======
 import HeatMapCard from "./HeatMapCard";
 
->>>>>>> mongodb
 
 const montserrat = Montserrat({
   subsets: ["latin"],
@@ -22,12 +19,8 @@ const sairaExtraCondensed = Saira_Extra_Condensed({
 });
 
 export default function Dashboard() {
-  const [fadeIn, setFadeIn] = useState(false);
+  const [fadeIn] = useState(true);
   const router = useRouter();
-
-  useEffect(() => {
-    setFadeIn(true);
-  }, []);
 
   const startups = dashboardStartups;
   const portfolioMetrics = dashboardSeed.portfolio_metrics;
@@ -366,20 +359,32 @@ export default function Dashboard() {
             color: "rgb(237, 243, 189)",
             letterSpacing: "-0.03em",
             display: "block",
-            marginRight: "-10.5vw",
             lineHeight: 1,
             marginTop: "4rem",
             marginBottom: "1.5rem",
+            width: "960px",
+            marginLeft: "auto",
+            marginRight: "auto",
           }}
         >
-          pollution heatmap
+          portfolio heatmap
         </div>
         <div
           className={`shadow p-4 ${sairaExtraCondensed.className}`}
-          style={{ background: "rgb(237, 243, 189)" }}
+          style={{ background: "rgb(237, 243, 189)", width: "960px", margin: "0 auto" }}
         >
-          <div style={{ height: "30rem", width: "100%" }}>
-            <HeatMapCard />
+          <div
+            style={{
+              padding: "20px",
+              width: "100%",
+              boxSizing: "border-box",
+              display: "flex",
+              justifyContent: "center",
+            }}
+          >
+            <div style={{ width: "910px", height: "550px" }}>
+              <HeatMapCard startups={dashboardSeed.startups} />
+            </div>
           </div>
         </div>
       </div>

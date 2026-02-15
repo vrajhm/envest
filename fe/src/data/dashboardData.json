@@ -29,7 +29,7 @@
       "net_zero_cred": 84,
       "confidence": 91,
       "status": "healthy",
-      "geo": { "city": "San Francisco", "lat": 37.7749, "lng": -122.4194 }
+      "geo": { "city": "Copenhagen", "lat": 55.6761, "lng": 12.5683 }
     },
     {
       "startup_id": "st_002",
@@ -40,7 +40,7 @@
       "net_zero_cred": 71,
       "confidence": 86,
       "status": "watch",
-      "geo": { "city": "San Francisco", "lat": 37.808, "lng": -122.4177 }
+      "geo": { "city": "Delhi", "lat": 28.6139, "lng": 77.209 }
     },
     {
       "startup_id": "st_003",
@@ -51,7 +51,7 @@
       "net_zero_cred": 63,
       "confidence": 80,
       "status": "watch",
-      "geo": { "city": "San Francisco", "lat": 37.7599, "lng": -122.4148 }
+      "geo": { "city": "Vancouver", "lat": 49.2827, "lng": -123.1207 }
     },
     {
       "startup_id": "st_004",
@@ -62,7 +62,7 @@
       "net_zero_cred": 54,
       "confidence": 74,
       "status": "high_risk",
-      "geo": { "city": "San Francisco", "lat": 37.7347, "lng": -122.3908 }
+      "geo": { "city": "Lahore", "lat": 31.5204, "lng": 74.3587 }
     },
     {
       "startup_id": "st_005",
@@ -73,7 +73,7 @@
       "net_zero_cred": 90,
       "confidence": 95,
       "status": "healthy",
-      "geo": { "city": "San Francisco", "lat": 37.7802, "lng": -122.4826 }
+      "geo": { "city": "Zurich", "lat": 47.3769, "lng": 8.5417 }
     },
     {
       "startup_id": "st_006",
@@ -84,7 +84,7 @@
       "net_zero_cred": 58,
       "confidence": 77,
       "status": "watch",
-      "geo": { "city": "San Francisco", "lat": 37.7284, "lng": -122.4292 }
+      "geo": { "city": "Dhaka", "lat": 23.8103, "lng": 90.4125 }
     },
     {
       "startup_id": "st_007",
@@ -95,7 +95,7 @@
       "net_zero_cred": 75,
       "confidence": 88,
       "status": "healthy",
-      "geo": { "city": "San Francisco", "lat": 37.7993, "lng": -122.447 }
+      "geo": { "city": "Wellington", "lat": -41.2865, "lng": 174.7762 }
     },
     {
       "startup_id": "st_008",
@@ -106,7 +106,7 @@
       "net_zero_cred": 49,
       "confidence": 70,
       "status": "high_risk",
-      "geo": { "city": "San Francisco", "lat": 37.7562, "lng": -122.3872 }
+      "geo": { "city": "Cairo", "lat": 30.0444, "lng": 31.2357 }
     },
     {
       "startup_id": "st_009",
@@ -117,7 +117,7 @@
       "net_zero_cred": 86,
       "confidence": 93,
       "status": "healthy",
-      "geo": { "city": "San Francisco", "lat": 37.7896, "lng": -122.4662 }
+      "geo": { "city": "Stockholm", "lat": 59.3293, "lng": 18.0686 }
     },
     {
       "startup_id": "st_010",
@@ -128,7 +128,7 @@
       "net_zero_cred": 69,
       "confidence": 84,
       "status": "watch",
-      "geo": { "city": "San Francisco", "lat": 37.7489, "lng": -122.458 }
+      "geo": { "city": "Ulaanbaatar", "lat": 47.8864, "lng": 106.9057 }
     }
   ]
 }
