@@ -79,7 +79,6 @@ export default function Home() {
         }}
       />
       {/* Large centered Playfair Display text after animation */}
-      {/* Large centered Playfair Display text after animation */}
       {animateUp && (
         <button
           onClick={() => router.push("/dashboard")}
