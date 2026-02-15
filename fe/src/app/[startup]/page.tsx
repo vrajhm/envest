@@ -1375,7 +1375,7 @@ export default function StartupDetail() {
                   color: "rgb(237, 243, 189)",
                   letterSpacing: "-0.04em",
                   lineHeight: 1,
-                  marginBottom: "0.5rem",
+                  marginBottom: "1.5rem",
                   marginTop: "7rem",
                   textShadow: "0 2px 16px rgba(36,44,32,0.18)",
                   textAlign: "left",
@@ -1487,7 +1487,7 @@ export default function StartupDetail() {
                         type="text"
                         value={chatInput}
                         onChange={(e) => setChatInput(e.target.value)}
-                        placeholder="Ask about vulnerabilities..."
+                        placeholder="ask about vulnerabilities..."
                         className="flex-1 px-3 py-2 rounded border text-sm focus:outline-none"
                         style={{
                           background: "white",
@@ -1507,7 +1507,7 @@ export default function StartupDetail() {
                           color: "white",
                         }}
                       >
-                        Send
+                        send
                       </button>
                     </div>
                   </form>
@@ -1518,89 +1518,178 @@ export default function StartupDetail() {
                   {/* Current Clause Card */}
                   {currentChatClause && (
                     <div
-                      className={`bg-[rgb(237,243,189)] shadow p-4 ${sairaExtraCondensed.className}`}
+                      className={`bg-[rgb(237,243,189)] shadow p-4 relative ${sairaExtraCondensed.className}`}
                       style={{
-                        borderLeft: `4px solid ${getVulnerabilityColor(currentChatClause.vulnerability_score)}`,
+                        background: "rgb(237, 243, 189)",
                         color: "rgb(26, 28, 18)",
+                        borderLeft: "none",
                       }}
                     >
+                      {/* Score number top right, text colored */}
                       <div
-                        className="font-bold text-lg mb-2"
+                        className="absolute top-4 right-4 font-bold"
+                        style={{
+                          color: getVulnerabilityColor(
+                            currentChatClause.vulnerability_score,
+                          ),
+                          fontSize: "1.5rem",
+                          letterSpacing: "0.01em",
+                        }}
+                      >
+                        {currentChatClause.vulnerability_score}
+                      </div>
+                      <div
+                        className="font-bold text-4xl mb-2"
                         style={{
                           lineHeight: "0.9",
-                          letterSpacing: "-0.02em",
+                          letterSpacing: "-0.03em",
+                          color: "rgb(26, 28, 18)",
+                          marginBottom: "0.5rem",
                         }}
                       >
                         CURRENT CLAUSE
                       </div>
                       <div
-                        className="text-xs font-bold mb-2"
+                        className="text-sm mb-2"
                         style={{
-                          background: getVulnerabilityColor(
-                            currentChatClause.vulnerability_score,
-                          ),
-                          color: "white",
-                          padding: "4px 8px",
-                          display: "inline-block",
+                          color: "rgb(85, 81, 46)",
+                          fontWeight: 500,
+                          fontSize: "1.15rem",
+                          lineHeight: "1.15",
+                          letterSpacing: "-0.01em",
+                          marginBottom: "0.5rem",
                         }}
                       >
-                        Score {currentChatClause.vulnerability_score}
-                      </div>
-                      <p
-                        className="text-xs line-clamp-4"
-                        style={{ color: "rgb(50, 50, 40)" }}
-                      >
                         {currentChatClause.clause_text}
-                      </p>
+                      </div>
                     </div>
                   )}
 
                   {/* Action Buttons */}
-                  <div className="space-y-2">
-                    <button
-                      onClick={handleResolveClause}
-                      disabled={
-                        !currentChatClause || resolvingClauseIdx !== null
-                      }
-                      className={`w-full p-3 text-sm font-bold rounded transition-all ${sairaExtraCondensed.className}`}
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      gap: "1rem",
+                    }}
+                  >
+                    <div
                       style={{
-                        background: currentChatClause
-                          ? "rgb(20, 100, 40)"
-                          : "rgb(120, 120, 120)",
-                        color: "white",
-                        letterSpacing: "0.03em",
+                        display: "flex",
+                        flexDirection: "row",
+                        gap: "2rem",
+                        justifyContent: "center",
+                        width: "100%",
                       }}
                     >
-                      RESOLVE
-                    </button>
-                    <button
-                      onClick={handleGetRectifiedClause}
-                      disabled={!currentChatClause || chatLoading}
-                      className={`w-full p-3 text-sm font-bold rounded transition-all ${sairaExtraCondensed.className}`}
+                      <button
+                        onClick={handleResolveClause}
+                        disabled={
+                          !currentChatClause || resolvingClauseIdx !== null
+                        }
+                        className={`font-bold transition-all ${montserrat.className}`}
+                        style={{
+                          background: "none",
+                          border: "none",
+                          color: "rgb(237, 243, 189)",
+                          letterSpacing: "0.03em",
+                          fontSize: "1.1rem",
+                          textTransform: "lowercase",
+                          cursor:
+                            currentChatClause && resolvingClauseIdx === null
+                              ? "pointer"
+                              : "not-allowed",
+                          padding: 0,
+                          width: "auto",
+                          textAlign: "center",
+                          opacity:
+                            currentChatClause && resolvingClauseIdx === null
+                              ? 1
+                              : 0.5,
+                          transition:
+                            "font-size 0.18s cubic-bezier(.4,1.3,.6,1)",
+                        }}
+                        onMouseEnter={(e) =>
+                          (e.currentTarget.style.fontSize = "1.35rem")
+                        }
+                        onMouseLeave={(e) =>
+                          (e.currentTarget.style.fontSize = "1.1rem")
+                        }
+                      >
+                        resolve
+                      </button>
+                      <button
+                        onClick={handleGetRectifiedClause}
+                        disabled={!currentChatClause || chatLoading}
+                        className={`font-bold transition-all ${montserrat.className}`}
+                        style={{
+                          background: "none",
+                          border: "none",
+                          color: "rgb(237, 243, 189)",
+                          letterSpacing: "0.03em",
+                          fontSize: "1.1rem",
+                          textTransform: "lowercase",
+                          cursor:
+                            currentChatClause && !chatLoading
+                              ? "pointer"
+                              : "not-allowed",
+                          padding: 0,
+                          width: "auto",
+                          textAlign: "center",
+                          opacity: currentChatClause && !chatLoading ? 1 : 0.5,
+                          transition:
+                            "font-size 0.18s cubic-bezier(.4,1.3,.6,1)",
+                        }}
+                        onMouseEnter={(e) =>
+                          (e.currentTarget.style.fontSize = "1.35rem")
+                        }
+                        onMouseLeave={(e) =>
+                          (e.currentTarget.style.fontSize = "1.1rem")
+                        }
+                      >
+                        get fixed clause
+                      </button>
+                    </div>
+                    <div
                       style={{
-                        background: currentChatClause
-                          ? "rgb(40, 80, 140)"
-                          : "rgb(120, 120, 120)",
-                        color: "white",
-                        letterSpacing: "0.03em",
+                        display: "flex",
+                        justifyContent: "center",
+                        width: "100%",
                       }}
                     >
-                      GET FIXED CLAUSE
-                    </button>
-                    <button
-                      onClick={handleGenerateEmail}
-                      disabled={!currentChatClause || chatLoading}
-                      className={`w-full p-3 text-sm font-bold rounded transition-all ${sairaExtraCondensed.className}`}
-                      style={{
-                        background: currentChatClause
-                          ? "rgb(140, 100, 40)"
-                          : "rgb(120, 120, 120)",
-                        color: "white",
-                        letterSpacing: "0.03em",
-                      }}
-                    >
-                      GENERATE EMAIL
-                    </button>
+                      <button
+                        onClick={handleGenerateEmail}
+                        disabled={!currentChatClause || chatLoading}
+                        className={`font-bold transition-all ${montserrat.className}`}
+                        style={{
+                          background: "none",
+                          border: "none",
+                          color: "rgb(237, 243, 189)",
+                          letterSpacing: "0.03em",
+                          fontSize: "1.1rem",
+                          textTransform: "lowercase",
+                          cursor:
+                            currentChatClause && !chatLoading
+                              ? "pointer"
+                              : "not-allowed",
+                          padding: 0,
+                          width: "auto",
+                          textAlign: "center",
+                          opacity: currentChatClause && !chatLoading ? 1 : 0.5,
+                          transition:
+                            "font-size 0.18s cubic-bezier(.4,1.3,.6,1)",
+                        }}
+                        onMouseEnter={(e) =>
+                          (e.currentTarget.style.fontSize = "1.35rem")
+                        }
+                        onMouseLeave={(e) =>
+                          (e.currentTarget.style.fontSize = "1.1rem")
+                        }
+                      >
+                        generate email
+                      </button>
+                    </div>
                   </div>
 
                   {/* Vulnerabilities List */}
@@ -1613,13 +1702,15 @@ export default function StartupDetail() {
                     }}
                   >
                     <div
-                      className="font-bold text-lg mb-3"
+                      className="font-bold text-4xl mb-3"
                       style={{
                         lineHeight: "0.9",
-                        letterSpacing: "-0.02em",
+                        letterSpacing: "-0.03em",
+                        color: "rgb(26, 28, 18)",
+                        marginBottom: "0.5rem",
                       }}
                     >
-                      REMAINING
+                      REMAINING CLAUSES
                     </div>
                     <div className="space-y-2">
                       {getUnresolvedClauses().map((clause, idx) => (
@@ -1629,13 +1720,14 @@ export default function StartupDetail() {
                             setChatClauseIndex(idx);
                             setSelectedClause(clause);
                           }}
-                          className="p-2 rounded cursor-pointer transition-all text-xs"
+                          className="p-2 cursor-pointer transition-all text-xs"
                           style={{
                             background:
                               currentChatClause === clause
                                 ? "rgb(255, 250, 245)"
                                 : "white",
                             borderLeft: `3px solid ${getVulnerabilityColor(clause.vulnerability_score)}`,
+                            borderRadius: 0,
                           }}
                         >
                           <div
@@ -1661,14 +1753,17 @@ export default function StartupDetail() {
 
                   {/* Status */}
                   <div
-                    className={`bg-[rgb(237,243,189)] shadow p-3 text-center text-xs ${sairaExtraCondensed.className}`}
+                    className={`bg-[rgb(237,243,189)] shadow p-3 text-center ${sairaExtraCondensed.className}`}
                     style={{
-                      color: "rgb(85, 81, 46)",
-                      fontWeight: 600,
-                      letterSpacing: "0.02em",
+                      fontFamily: "Saira Extra Condensed",
+                      fontWeight: "bold",
+                      fontSize: "2rem",
+                      lineHeight: "0.9",
+                      letterSpacing: "-0.03em",
+                      color: "rgb(26, 28, 18)",
                     }}
                   >
-                    Status: {chatStatus}
+                    STATUS: {chatStatus}
                   </div>
                 </div>
               </div>
@@ -1683,25 +1778,22 @@ export default function StartupDetail() {
               onClick={() => setEmailModalOpen(false)}
             >
               <div
-                className="w-full max-w-2xl rounded-xl shadow-2xl overflow-hidden"
+                className="w-full max-w-2xl shadow-2xl overflow-hidden"
                 style={{ background: "rgb(237, 243, 189)" }}
                 onClick={(e) => e.stopPropagation()}
               >
-                <div
-                  className="px-6 py-4"
-                  style={{
-                    background:
-                      "linear-gradient(135deg, rgb(56, 58, 45) 0%, rgb(36, 44, 32) 100%)",
-                  }}
-                >
+                <div className="px-6 pt-6 pb-0">
                   <h3
-                    className="font-bold text-lg"
+                    className="font-bold text-4xl mb-2"
                     style={{
-                      color: "rgb(237, 243, 189)",
-                      fontFamily: "Playfair Display, serif",
+                      fontFamily: "Saira Extra Condensed",
+                      color: "rgb(56, 58, 45)",
+                      lineHeight: "0.9",
+                      letterSpacing: "-0.03em",
+                      marginBottom: "0.5rem",
                     }}
                   >
-                    Investor Email Draft
+                    INVESTOR EMAIL DRAFT
                   </h3>
                 </div>
                 <div className="p-6">
@@ -1714,16 +1806,23 @@ export default function StartupDetail() {
                   >
                     {emailDraft || "No draft generated."}
                   </pre>
-                  <div className="mt-6 flex justify-end gap-3">
+                  <div className="mt-6 flex justify-end gap-6">
                     <button
                       onClick={() => setEmailModalOpen(false)}
-                      className="px-5 py-2 font-semibold"
+                      className="font-semibold email-modal-btn"
                       style={{
-                        border: "2px solid rgb(85, 81, 46)",
-                        color: "rgb(85, 81, 46)",
+                        border: "none",
+                        background: "none",
+                        color: "rgb(56, 58, 45)",
+                        cursor: "pointer",
+                        padding: 0,
+                        fontSize: "1.1rem",
+                        letterSpacing: "0.01em",
+                        transition: "transform 0.18s cubic-bezier(.4,1.3,.6,1)",
+                        display: "inline-block",
                       }}
                     >
-                      Close
+                      close
                     </button>
                     <button
                       onClick={() => {
@@ -1736,13 +1835,20 @@ export default function StartupDetail() {
                           },
                         ]);
                       }}
-                      className="px-5 py-2 font-semibold"
+                      className="font-semibold email-modal-btn"
                       style={{
-                        background: "rgb(20, 54, 17)",
-                        color: "white",
+                        border: "none",
+                        background: "none",
+                        color: "rgb(56, 58, 45)",
+                        cursor: "pointer",
+                        padding: 0,
+                        fontSize: "1.1rem",
+                        letterSpacing: "0.01em",
+                        transition: "transform 0.18s cubic-bezier(.4,1.3,.6,1)",
+                        display: "inline-block",
                       }}
                     >
-                      Accept and Send
+                      accept and send
                     </button>
                   </div>
                 </div>
@@ -1754,6 +1860,9 @@ export default function StartupDetail() {
             @keyframes pulse {
               0%, 100% { opacity: 1; }
               50% { opacity: 0.4; }
+            }
+            .email-modal-btn:hover {
+              transform: scale(1.05);
             }
           `}</style>
         </div>
