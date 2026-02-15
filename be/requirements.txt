@@ -1,15 +1,33 @@
-llama-cloud>=1.0
+# Core FastAPI & server
 fastapi==0.116.1
-python-dotenv
 uvicorn[standard]==0.35.0
+python-dotenv>=1.0.0
 pydantic==2.11.7
 pydantic-settings==2.10.1
 httpx==0.28.1
+
+# MongoDB & Database (from mongodb branch)
+pymongo>=4.5.0
+motor
+
+# API requests (from mongodb branch)
+requests>=2.28.0
+
+# Testing
 pytest==8.4.1
 pytest-asyncio==1.1.0
+
+# LlamaIndex & AI (from main branch)
+llama-cloud>=1.0
 llama-index-core>=0.14.0
 llama-index-llms-google-genai>=0.8.0
 llama-index-embeddings-google-genai>=0.3.0
 google-generativeai
 google-genai>=0.5.0
+<<<<<<< HEAD
+
+# PDF generation
+reportlab==4.2.5
+=======
 motor
+>>>>>>> main

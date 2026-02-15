@@ -1,11 +1,15 @@
 "use client";
-import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Smooch_Sans, Montserrat } from "next/font/google";
 import { Saira_Extra_Condensed } from "next/font/google";
 import { useEffect, useState } from "react";
+<<<<<<< HEAD
 import { dashboardSeed, dashboardStartups } from "@/lib/dashboardData";
+=======
+import HeatMapCard from "./HeatMapCard";
+
+>>>>>>> mongodb
 
 const montserrat = Montserrat({
   subsets: ["latin"],
@@ -351,6 +355,31 @@ export default function Dashboard() {
                 ))}
               </tbody>
             </table>
+          </div>
+        </div>
+        <div
+          style={{
+            fontFamily: "Playfair Display, serif",
+            fontWeight: 400,
+            fontStyle: "normal",
+            fontSize: "6rem",
+            color: "rgb(237, 243, 189)",
+            letterSpacing: "-0.03em",
+            display: "block",
+            marginRight: "-10.5vw",
+            lineHeight: 1,
+            marginTop: "4rem",
+            marginBottom: "1.5rem",
+          }}
+        >
+          pollution heatmap
+        </div>
+        <div
+          className={`shadow p-4 ${sairaExtraCondensed.className}`}
+          style={{ background: "rgb(237, 243, 189)" }}
+        >
+          <div style={{ height: "30rem", width: "100%" }}>
+            <HeatMapCard />
           </div>
         </div>
       </div>
