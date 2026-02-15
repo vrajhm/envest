@@ -394,31 +394,13 @@ export default function Dashboard() {
                     SECTOR
                   </th>
                   <th
-                    className={`py-2 px-4 font-bold tracking-tight text-3xl  ${sairaExtraCondensed.className} text-left`}
-                    style={{ color: "rgb(26, 28, 18)", lineHeight: "0.9" }}
-                  >
-                    CLIMATE TRUST
-                  </th>
-                  <th
-                    className={`py-2 px-4 font-bold tracking-tight text-3xl  ${sairaExtraCondensed.className} text-left`}
-                    style={{ color: "rgb(26, 28, 18)", lineHeight: "0.9" }}
-                  >
-                    GREENWASH RISK
-                  </th>
-                  <th
-                    className={`py-2 px-4 font-bold tracking-tight text-3xl  ${sairaExtraCondensed.className} text-left`}
-                    style={{ color: "rgb(26, 28, 18)", lineHeight: "0.9" }}
-                  >
-                    NET-ZERO CRED.
-                  </th>
-                  <th
-                    className={`py-2 px-4 font-bold tracking-tight text-3xl  ${sairaExtraCondensed.className} text-left`}
+                    className={`py-2 px-4 font-bold tracking-tight text-3xl  ${sairaExtraCondensed.className} text-center`}
                     style={{ color: "rgb(26, 28, 18)", lineHeight: "0.9" }}
                   >
                     CONFIDENCE
                   </th>
                   <th
-                    className={`py-2 px-4 font-bold tracking-tight text-3xl  ${sairaExtraCondensed.className} text-left`}
+                    className={`py-2 px-4 font-bold tracking-tight text-3xl  ${sairaExtraCondensed.className} text-center`}
                     style={{ color: "rgb(26, 28, 18)", lineHeight: "0.9" }}
                   >
                     STATUS
@@ -442,8 +424,12 @@ export default function Dashboard() {
                     }
                   >
                     <td
-                      className="py-2 px-4 text-center uppercase text-lg font-normal mt-1 tracking-tight"
-                      style={{ color: "rgb(85, 81, 46)", lineHeight: "0.9" }}
+                      className="py-2 px-4 text-center uppercase text-2xl mt-1 tracking-tight"
+                      style={{
+                        color: "rgb(52, 56, 36)",
+                        lineHeight: "0.9",
+                        letterSpacing: "0.02em",
+                      }}
                     >
                       {startup.name}
                     </td>
@@ -452,24 +438,6 @@ export default function Dashboard() {
                       style={{ color: "rgb(85, 81, 46)", lineHeight: "0.9" }}
                     >
                       {startup.sector}
-                    </td>
-                    <td
-                      className="py-2 px-4 text-center uppercase text-lg font-normal mt-1 tracking-tight"
-                      style={{ color: "rgb(85, 81, 46)", lineHeight: "0.9" }}
-                    >
-                      {startup.climateTrust}
-                    </td>
-                    <td
-                      className="py-2 px-4 text-center uppercase text-lg font-normal mt-1 tracking-tight"
-                      style={{ color: "rgb(85, 81, 46)", lineHeight: "0.9" }}
-                    >
-                      {startup.greenwashRisk}
-                    </td>
-                    <td
-                      className="py-2 px-4 text-center uppercase text-lg font-normal mt-1 tracking-tight"
-                      style={{ color: "rgb(85, 81, 46)", lineHeight: "0.9" }}
-                    >
-                      {startup.netZeroCred}
                     </td>
                     <td
                       className="py-2 px-4 text-center uppercase text-lg font-normal mt-1 tracking-tight"
