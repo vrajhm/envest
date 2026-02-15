@@ -19,6 +19,7 @@ class Settings(BaseSettings):
 
     gemini_model: str = "models/gemini-3-flash-preview"
     gemini_api_key: str = ""
+    openaq_api_key: str = ""
 
     artifacts_dir: str = "be/rag_agent/artifacts"
     parsing_retrieve_url: str = "http://127.0.0.1:8000/retrieve"
@@ -26,7 +27,12 @@ class Settings(BaseSettings):
     chat_retrieval_timeout_seconds: float = 1.5
     chat_retrieval_chunk_chars: int = 500
 
-    model_config = SettingsConfigDict(env_file="be/.env", env_file_encoding="utf-8", extra="ignore")
+    # Support launching uvicorn from either repo root or be/ directory.
+    model_config = SettingsConfigDict(
+        env_file=("be/.env", ".env"),
+        env_file_encoding="utf-8",
+        extra="ignore",
+    )
 
 
 @lru_cache

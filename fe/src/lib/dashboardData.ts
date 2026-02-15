@@ -1,6 +1,12 @@
 import dashboardDataJson from "@/data/dashboardData.json";
 
-export type StartupStatus = "high_risk" | "neutral" | "low_risk" | "N/A";
+export type StartupStatus =
+  | "high_risk"
+  | "neutral"
+  | "low_risk"
+  | "healthy"
+  | "watch"
+  | "N/A";
 
 export type DashboardData = {
   version: string;

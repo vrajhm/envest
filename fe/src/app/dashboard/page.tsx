@@ -10,6 +10,7 @@ import {
   dashboardStartups,
   type DashboardStartupRow,
 } from "@/lib/dashboardData";
+import HeatMapCard from "./HeatMapCard";
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -495,6 +496,43 @@ export default function Dashboard() {
                 ))}
               </tbody>
             </table>
+          </div>
+          <div
+            style={{
+              fontFamily: "Playfair Display, serif",
+              fontWeight: 400,
+              fontStyle: "normal",
+              fontSize: "6rem",
+              color: "rgb(237, 243, 189)",
+              letterSpacing: "-0.03em",
+              display: "block",
+              lineHeight: 1,
+              marginTop: "4rem",
+              marginBottom: "1.5rem",
+              width: "960px",
+              marginLeft: "auto",
+              marginRight: "auto",
+            }}
+          >
+            portfolio heatmap
+          </div>
+          <div
+            className={`shadow p-4 ${sairaExtraCondensed.className}`}
+            style={{ background: "rgb(237, 243, 189)", width: "960px", margin: "0 auto" }}
+          >
+            <div
+              style={{
+                padding: "20px",
+                width: "100%",
+                boxSizing: "border-box",
+                display: "flex",
+                justifyContent: "center",
+              }}
+            >
+              <div style={{ width: "910px", height: "550px" }}>
+                <HeatMapCard startups={dashboardSeed.startups} />
+              </div>
+            </div>
           </div>
         </div>
       </div>
