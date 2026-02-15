@@ -38,6 +38,14 @@ type ChatUpdate = {
   reason: string;
 };
 
+type CleanupResponse = {
+  status: "completed";
+  artifact_paths?: {
+    investor_email_path?: string;
+  };
+  investor_email_draft?: string;
+};
+
 const DEFAULT_CONTEXT = {
   overall_trust_score: 48,
   per_goal_scores: [
@@ -71,12 +79,15 @@ export default function ChatPage() {
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [text, setText] = useState("");
   const [loading, setLoading] = useState(false);
+  const [resolvingClauseId, setResolvingClauseId] = useState<string | null>(null);
   const [contextLoaded, setContextLoaded] = useState(false);
   const [status, setStatus] = useState("Idle");
   const [contextJson, setContextJson] = useState(JSON.stringify(DEFAULT_CONTEXT, null, 2));
   const [context, setContext] = useState<ContextRecord | null>(null);
   const [selectedClauseId, setSelectedClauseId] = useState<string | null>(null);
   const [loaderOpen, setLoaderOpen] = useState(true);
+  const [emailModalOpen, setEmailModalOpen] = useState(false);
+  const [emailDraft, setEmailDraft] = useState("");
 
   const canSend = useMemo(() => contextLoaded && text.trim().length > 0 && !loading, [contextLoaded, text, loading]);
 
@@ -122,15 +133,17 @@ export default function ChatPage() {
     setLoading(true);
     setStatus("Loading context...");
     try {
-      const parsed = JSON.parse(contextJson);
-      const res = await fetch(`${API_BASE}/v1/context/load`, {
+      const res = await fetch(`${API_BASE}/ingest`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(parsed),
+        body: JSON.stringify({ use_cache_on_score_failure: false }),
       });
+      const data = await res.json();
       if (!res.ok) {
-        const body = await res.text();
-        throw new Error(body || `Context load failed (${res.status})`);
+        throw new Error(data?.detail || `Context load failed (${res.status})`);
+      }
+      if (!data?.ok) {
+        throw new Error("Ingest did not return ok=true.");
       }
       await refreshContext();
       setContextLoaded(true);
@@ -143,7 +156,12 @@ export default function ChatPage() {
     }
   }
 
-  async function sendRawMessage(message: string, clauseIdOverride?: string | null, silentUser = false) {
+  async function sendRawMessage(
+    message: string,
+    clauseIdOverride?: string | null,
+    silentUser = false,
+    includeReplacementClause = false,
+  ) {
     const useClause = clauseIdOverride || selectedClauseId || "clause_001";
 
     if (!silentUser) {
@@ -157,6 +175,7 @@ export default function ChatPage() {
         conversation_id: "web_chat",
         clause_id: useClause,
         message,
+        include_replacement_clause: includeReplacementClause,
       }),
     });
     const data = await res.json();
@@ -196,7 +215,7 @@ export default function ChatPage() {
   }
 
   async function resolveClause(clauseId: string) {
-    setLoading(true);
+    setResolvingClauseId(clauseId);
     setStatus(`Resolving ${clauseId}...`);
 
     // Optimistic UI update
@@ -217,6 +236,28 @@ export default function ChatPage() {
       setStatus(err instanceof Error ? err.message : "Resolve failed.");
       await refreshContext();
     } finally {
+      setResolvingClauseId(null);
+    }
+  }
+
+  async function getRectifiedClause() {
+    if (!selectedClauseId) {
+      setStatus("Select a clause first.");
+      return;
+    }
+    setLoading(true);
+    setStatus(`Generating rectified clause for ${selectedClauseId}...`);
+    try {
+      await sendRawMessage(
+        "Please generate a rectified clause for the selected vulnerable clause.",
+        selectedClauseId,
+        true,
+        true,
+      );
+      setStatus("Rectified clause ready.");
+    } catch (err) {
+      setStatus(err instanceof Error ? err.message : "Rectified clause generation failed.");
+    } finally {
       setLoading(false);
     }
   }
@@ -230,23 +271,35 @@ export default function ChatPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ confirmed: true, investor_note: "Approved from web chat." }),
       });
-      const data = await res.json();
+      const data: CleanupResponse = await res.json();
       if (!res.ok) {
-        throw new Error(data?.detail || `Cleanup failed (${res.status})`);
+        throw new Error((data as unknown as { detail?: string })?.detail || `Cleanup failed (${res.status})`);
       }
-      setStatus("Artifacts generated.");
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: "assistant",
-          text: `Artifacts generated:\n- ${data.artifact_paths?.revised_text_path}\n- ${data.artifact_paths?.revised_pdf_path}\n- ${data.artifact_paths?.investor_email_path}`,
-        },
-      ]);
+      setStatus("Email draft generated.");
+      setEmailDraft((data.investor_email_draft || "").trim());
+      setEmailModalOpen(true);
     } catch (err) {
       setStatus(err instanceof Error ? err.message : "Artifact generation failed.");
     } finally {
       setLoading(false);
     }
+  }
+
+  function declineEmailDraft() {
+    setEmailModalOpen(false);
+    setStatus("Email draft declined.");
+  }
+
+  function acceptAndSendEmailDraft() {
+    setEmailModalOpen(false);
+    setStatus("Email draft accepted (not sent).");
+    setMessages((prev) => [
+      ...prev,
+      {
+        role: "assistant",
+        text: "Email draft accepted. No external send was performed.",
+      },
+    ]);
   }
 
   return (
@@ -303,6 +356,13 @@ export default function ChatPage() {
             >
               Generate Artifacts
             </button>
+            <button
+              onClick={getRectifiedClause}
+              className="rounded-md px-3 py-1.5 text-sm bg-green-700 text-white disabled:opacity-50"
+              disabled={!contextLoaded || loading || !selectedClause}
+            >
+              Get Rectified Clause
+            </button>
             {selectedClause && (
               <span className="text-xs text-green-900/80 self-center">
                 Selected: {selectedClause.clause_id} (score {selectedClause.vulnerability_score})
@@ -338,9 +398,13 @@ export default function ChatPage() {
                           e.stopPropagation();
                           void resolveClause(clause.clause_id);
                         }}
-                        disabled={loading || clause.status === "resolved"}
+                        disabled={resolvingClauseId === clause.clause_id || clause.status === "resolved"}
                       >
-                        {clause.status === "resolved" ? "Resolved" : "Resolve"}
+                        {clause.status === "resolved"
+                          ? "Resolved"
+                          : resolvingClauseId === clause.clause_id
+                            ? "Resolving..."
+                            : "Resolve"}
                       </button>
                     </div>
                   </div>
@@ -361,7 +425,7 @@ export default function ChatPage() {
           </button>
           {loaderOpen && (
             <div className="p-3">
-              <p className="text-xs text-green-900/70 mb-2">Paste `/score` JSON and load active context.</p>
+              <p className="text-xs text-green-900/70 mb-2">Loads active context directly from `/score` via `/ingest`.</p>
               <textarea
                 value={contextJson}
                 onChange={(e) => setContextJson(e.target.value)}
@@ -372,13 +436,42 @@ export default function ChatPage() {
                 disabled={loading}
                 className="mt-2 w-full rounded-lg px-3 py-2 bg-green-950 text-white text-sm disabled:opacity-50"
               >
-                Load Active Context
+                Load From Score
               </button>
               <p className="mt-2 text-[11px] text-green-900/70">API: {API_BASE}</p>
             </div>
           )}
         </div>
       </div>
+
+      {emailModalOpen && (
+        <div className="fixed inset-0 z-[70] flex items-center justify-center bg-black/35 px-4">
+          <div className="w-full max-w-2xl rounded-xl border border-green-900/20 bg-white shadow-xl">
+            <div className="border-b border-green-900/10 px-4 py-3">
+              <h3 className="text-base font-semibold text-green-950">Investor Email Draft</h3>
+            </div>
+            <div className="p-4">
+              <pre className="max-h-[420px] overflow-auto whitespace-pre-wrap rounded-lg border border-green-900/10 bg-[#f7f3ea] p-3 text-sm text-green-950">
+                {emailDraft || "No draft returned."}
+              </pre>
+              <div className="mt-4 flex justify-end gap-2">
+                <button
+                  onClick={declineEmailDraft}
+                  className="rounded-md border border-green-900/20 px-3 py-1.5 text-sm text-green-900"
+                >
+                  Decline
+                </button>
+                <button
+                  onClick={acceptAndSendEmailDraft}
+                  className="rounded-md bg-green-900 px-3 py-1.5 text-sm text-white"
+                >
+                  Accept and Send
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

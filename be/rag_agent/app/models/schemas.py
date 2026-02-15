@@ -74,6 +74,7 @@ class ChatRequest(BaseModel):
     message: str = Field(min_length=1)
     conversation_id: str = "default"
     clause_id: str | None = None
+    include_replacement_clause: bool = False
 
 
 class ClauseStatusUpdate(BaseModel):
@@ -99,6 +100,7 @@ class CleanupGenerateResponse(BaseModel):
     session_id: str
     status: Literal["completed"]
     artifact_paths: dict[str, str]
+    investor_email_draft: str
     unresolved_clause_ids: list[str] = Field(default_factory=list)
     change_log: list[str] = Field(default_factory=list)
 
