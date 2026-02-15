@@ -28,7 +28,7 @@
       "greenwash_risk": 18,
       "net_zero_cred": 84,
       "confidence": 91,
-      "status": "healthy",
+      "status": "low-risk",
       "geo": { "city": "Copenhagen", "lat": 55.6761, "lng": 12.5683 }
     },
     {
@@ -39,7 +39,7 @@
       "greenwash_risk": 32,
       "net_zero_cred": 71,
       "confidence": 86,
-      "status": "watch",
+      "status": "neutral",
       "geo": { "city": "Delhi", "lat": 28.6139, "lng": 77.209 }
     },
     {
@@ -50,7 +50,7 @@
       "greenwash_risk": 41,
       "net_zero_cred": 63,
       "confidence": 80,
-      "status": "watch",
+      "status": "neutral",
       "geo": { "city": "Vancouver", "lat": 49.2827, "lng": -123.1207 }
     },
     {
@@ -61,7 +61,7 @@
       "greenwash_risk": 62,
       "net_zero_cred": 54,
       "confidence": 74,
-      "status": "high_risk",
+      "status": "high-risk",
       "geo": { "city": "Lahore", "lat": 31.5204, "lng": 74.3587 }
     },
     {
@@ -72,7 +72,7 @@
       "greenwash_risk": 12,
       "net_zero_cred": 90,
       "confidence": 95,
-      "status": "healthy",
+      "status": "low-risk",
       "geo": { "city": "Zurich", "lat": 47.3769, "lng": 8.5417 }
     },
     {
@@ -83,7 +83,7 @@
       "greenwash_risk": 55,
       "net_zero_cred": 58,
       "confidence": 77,
-      "status": "watch",
+      "status": "neutral",
       "geo": { "city": "Dhaka", "lat": 23.8103, "lng": 90.4125 }
     },
     {
@@ -94,7 +94,7 @@
       "greenwash_risk": 28,
       "net_zero_cred": 75,
       "confidence": 88,
-      "status": "healthy",
+      "status": "low-risk",
       "geo": { "city": "Wellington", "lat": -41.2865, "lng": 174.7762 }
     },
     {
@@ -105,7 +105,7 @@
       "greenwash_risk": 67,
       "net_zero_cred": 49,
       "confidence": 70,
-      "status": "high_risk",
+      "status": "high-risk",
       "geo": { "city": "Cairo", "lat": 30.0444, "lng": 31.2357 }
     },
     {
@@ -116,7 +116,7 @@
       "greenwash_risk": 15,
       "net_zero_cred": 86,
       "confidence": 93,
-      "status": "healthy",
+      "status": "low-risk",
       "geo": { "city": "Stockholm", "lat": 59.3293, "lng": 18.0686 }
     },
     {
@@ -127,7 +127,7 @@
       "greenwash_risk": 39,
       "net_zero_cred": 69,
       "confidence": 84,
-      "status": "watch",
+      "status": "neutral",
       "geo": { "city": "Ulaanbaatar", "lat": 47.8864, "lng": 106.9057 }
     }
   ]
