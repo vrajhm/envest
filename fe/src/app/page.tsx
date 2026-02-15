@@ -11,7 +11,11 @@ export default function Home() {
   const [tabAnimateUp, setTabAnimateUp] = useState(false);
   const [showBgImage, setShowBgImage] = useState(false);
   const [fadeOut, setFadeOut] = useState(false);
+  const [highlightedWords, setHighlightedWords] = useState(0);
+  const [descriptionOpacity, setDescriptionOpacity] = useState(0);
   const router = useRouter();
+
+  const headingWords = ["Your", "portfolio", "deserves", "the", "truth"];
 
   useEffect(() => {
     setTimeout(() => setShowLeaf1(true), 200);
@@ -21,6 +25,36 @@ export default function Home() {
     setTimeout(() => setTabAnimateUp(true), 3800);
     setTimeout(() => setShowBgImage(true), 2600);
   }, []);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      // Get the scroll section element
+      const scrollSection = document.querySelector("[data-scroll-section]");
+      if (!scrollSection) return;
+
+      const rect = scrollSection.getBoundingClientRect();
+      // Start highlighting when heading is in the middle of the viewport
+      const scrollProgress = Math.max(
+        0,
+        Math.min(1, (window.innerHeight - rect.top) / window.innerHeight),
+      );
+
+      // Only start highlighting after 50% of scroll progress through section
+      const highlightProgress = Math.max(0, (scrollProgress - 0.5) / 0.5);
+
+      // Calculate how many words should be highlighted (0-5)
+      const totalWords = headingWords.length;
+      const wordsToHighlight = Math.floor(highlightProgress * totalWords);
+      setHighlightedWords(wordsToHighlight);
+
+      // Description fades in only after all words are highlighted
+      const descOpacity = wordsToHighlight >= totalWords ? 1 : 0;
+      setDescriptionOpacity(descOpacity);
+    };
+
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, [headingWords.length]);
 
   const handleDashboardClick = () => {
     setFadeOut(true);
@@ -344,6 +378,7 @@ export default function Home() {
 
       {/* SCROLL SECTION - Solid Background */}
       <div
+        data-scroll-section
         style={{
           minHeight: "100vh",
           width: "100%",
@@ -364,9 +399,26 @@ export default function Home() {
               color: "rgb(237, 243, 189)",
               marginBottom: "2rem",
               letterSpacing: "-0.02em",
+              lineHeight: 1.2,
             }}
           >
-            Your portfolio deserves the truth.
+            {headingWords.map((word, index) => (
+              <span
+                key={index}
+                style={{
+                  color:
+                    index < highlightedWords
+                      ? "rgb(237, 243, 189)"
+                      : "rgb(237, 243, 189)",
+                  opacity: index < highlightedWords ? 1 : 0.35,
+                  transition: "opacity 0.3s ease-out",
+                  marginRight: "0.3em",
+                  display: "inline-block",
+                }}
+              >
+                {word}
+              </span>
+            ))}
           </h2>
           <p
             style={{
@@ -375,7 +427,8 @@ export default function Home() {
               color: "rgb(237, 243, 189)",
               lineHeight: 1.8,
               marginBottom: "2rem",
-              opacity: 0.9,
+              opacity: 0.9 * descriptionOpacity,
+              transition: "opacity 0.3s ease-out",
             }}
           >
             Most climate claims sound good on paper. We look deeper. Using
@@ -388,7 +441,8 @@ export default function Home() {
               fontSize: "1.1rem",
               color: "rgb(237, 243, 189)",
               lineHeight: 1.8,
-              opacity: 0.85,
+              opacity: 0.85 * descriptionOpacity,
+              transition: "opacity 0.3s ease-out",
             }}
           >
             Climate action starts with clarity. Sincerity can't be marketed—only
