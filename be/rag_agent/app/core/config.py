@@ -19,7 +19,6 @@ class Settings(BaseSettings):
 
     gemini_model: str = "models/gemini-3-flash-preview"
     gemini_api_key: str = ""
-    openaq_api_key: str = ""
 
     artifacts_dir: str = "be/rag_agent/artifacts"
     parsing_retrieve_url: str = "http://127.0.0.1:8000/retrieve"
