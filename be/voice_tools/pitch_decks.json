@@ -1,0 +1,24 @@
+{
+  "startups": [
+    {
+      "name": "EcoGen Grid",
+      "sector": "Energy",
+      "description": "Leading solar energy innovator",
+      "claims": "100MW solar installations, carbon neutral operations",
+      "funding": "Series A - $25M",
+      "ceo": "John Smith",
+      "founded": 2021,
+      "location": "San Francisco"
+    },
+    {
+      "name": "BlueLoop Carbon",
+      "sector": "Carbon Tech",
+      "description": "Carbon capture technology",
+      "claims": "1M tons CO2 captured, verified by third party",
+      "funding": "Seed - $5M",
+      "ceo": "Sarah Johnson",
+      "founded": 2022,
+      "location": "Austin"
+    }
+  ]
+}
