@@ -272,7 +272,9 @@ export default function Dashboard() {
                     className={`${montserrat.className} h-10 border border-[rgb(85,81,46)] bg-[rgb(237,243,189)] px-3 text-[rgb(26,28,18)] outline-none`}
                   />
                   {addStartupError && (
-                    <div className={`${montserrat.className} text-sm text-red-800`}>
+                    <div
+                      className={`${montserrat.className} text-sm text-red-800`}
+                    >
                       {addStartupError}
                     </div>
                   )}
