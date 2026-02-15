@@ -138,8 +138,7 @@ export default function StartupDetail() {
   );
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Chat modal state
-  const [chatOpen, setChatOpen] = useState(false);
+  // Chat state
   const [chatMessages, setChatMessages] = useState<
     { role: "user" | "assistant"; text: string }[]
   >([]);
@@ -157,7 +156,6 @@ export default function StartupDetail() {
   const [chatClauseIndex, setChatClauseIndex] = useState<number>(0);
 
   const [fadeIn, setFadeIn] = useState(false);
-  // Controls when the analysis box appears
   const [showAnalysisBox, setShowAnalysisBox] = useState(false);
 
   const RAG_API_BASE = "http://localhost:8000";
@@ -166,11 +164,10 @@ export default function StartupDetail() {
     setTimeout(() => setFadeIn(true), 200);
   }, []);
 
-  // Delay showing the analysis box after dropbox disables
   useEffect(() => {
     if (phase === "parsing" || phase === "analyzing") {
       setShowAnalysisBox(false);
-      const timeout = setTimeout(() => setShowAnalysisBox(true), 600); // 600ms delay
+      const timeout = setTimeout(() => setShowAnalysisBox(true), 600);
       return () => clearTimeout(timeout);
     } else if (phase === "complete" || phase === "idle") {
       setShowAnalysisBox(false);
@@ -270,16 +267,14 @@ export default function StartupDetail() {
       await sendChatMessage("Mark this clause as resolved.", true);
       setResolvedClauses((prev) => new Set(prev).add(clauseIdx));
 
-      // Move to next clause or close
       const remaining = getUnresolvedClauses();
       if (remaining.length > 0) {
-        setChatClauseIndex(0); // Reset to first
+        setChatClauseIndex(0);
         setSelectedClause(remaining[0]);
         setChatStatus("Clause resolved! Moving to next...");
       } else {
         setSelectedClause(null);
         setChatStatus("All clauses resolved!");
-        setChatOpen(false);
       }
     } catch {
       setChatStatus("Failed to resolve clause");
@@ -427,15 +422,6 @@ export default function StartupDetail() {
     }
   };
 
-  const calculateGreenwashRisk = (data: ScoreData): number => {
-    if (!data.vulnerable_clauses.length) return 0;
-    const total = data.vulnerable_clauses.reduce(
-      (sum, c) => sum + c.vulnerability_score,
-      0,
-    );
-    return Math.round(total / data.vulnerable_clauses.length);
-  };
-
   const handleUpload = async () => {
     if (!file) return;
     setUploading(true);
@@ -510,10 +496,10 @@ export default function StartupDetail() {
   };
 
   const getVulnerabilityColor = (score: number): string => {
-    if (score <= 20) return "rgb(20, 100, 40)"; // green
-    if (score <= 40) return "rgb(160, 130, 20)"; // darker yellow
-    if (score <= 60) return "rgb(200, 80, 20)"; // darker orange
-    return "rgb(140, 20, 20)"; // dark red for high risk
+    if (score <= 20) return "rgb(20, 100, 40)";
+    if (score <= 40) return "rgb(160, 130, 20)";
+    if (score <= 60) return "rgb(200, 80, 20)";
+    return "rgb(140, 20, 20)";
   };
 
   const getSeverityLabel = (score: number): string => {
@@ -576,7 +562,10 @@ export default function StartupDetail() {
         </Link>
 
         <div className="relative z-10 max-w-6xl mx-auto">
-          <div className=" flex justify-end">
+          <div
+            className="flex justify-end flex-col items-end gap-0.5"
+            style={{ marginBottom: "-5rem" }}
+          >
             <Link
               href="/dashboard"
               className={`${montserrat.className} text-lg font-semibold`}
@@ -588,6 +577,37 @@ export default function StartupDetail() {
             >
               ← back to portfolio
             </Link>
+            {phase === "complete" && (
+              <button
+                onClick={() => {
+                  const element = document.querySelector("[data-ai-resolver]");
+                  if (element) {
+                    element.scrollIntoView({
+                      behavior: "smooth",
+                      block: "start",
+                    });
+                  }
+                }}
+                className={`${montserrat.className} text-lg font-semibold`}
+                style={{
+                  color: "rgb(237, 243, 189)",
+                  letterSpacing: "0.04em",
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  padding: 0,
+                  transition: "transform 0.18s cubic-bezier(.4,1.3,.6,1)",
+                }}
+                onMouseEnter={(e) =>
+                  (e.currentTarget.style.transform = "scale(1.05)")
+                }
+                onMouseLeave={(e) =>
+                  (e.currentTarget.style.transform = "scale(1)")
+                }
+              >
+                ai assistant →
+              </button>
+            )}
           </div>
 
           <div
@@ -656,7 +676,6 @@ export default function StartupDetail() {
                       >
                         {statusMessage || "Analyzing ESG report..."}
                       </span>
-                      {/* Removed animated green bar during analyzing phase */}
                     </>
                   )}
                   {phase === "complete" && (
@@ -796,15 +815,11 @@ export default function StartupDetail() {
                   {file.name}
                 </span>
               )}
-
-              {/* Upload & Analyze button removed; analysis now starts automatically after file upload */}
-
-              {/* Status message removed from dropbox; now only appears in the analysis box above */}
             </div>
           </div>
 
           {/* Main Content Grid */}
-          <div className="grid grid-cols-1 xl:grid-cols-[1fr_1fr_380px] gap-6">
+          <div className="grid grid-cols-1 xl:grid-cols-[1fr_1fr_380px] gap-6 mb-10">
             {/* Left Column: Key Stats + Radar Chart */}
             <div>
               {/* Key Stats Row */}
@@ -846,13 +861,20 @@ export default function StartupDetail() {
                     style={{
                       color: scoreData
                         ? getScoreColor(
-                            calculateGreenwashRisk(scoreData),
+                            Math.round(
+                              scoreData.vulnerable_clauses.reduce(
+                                (sum, c) => sum + c.vulnerability_score,
+                                0,
+                              ) / scoreData.vulnerable_clauses.length,
+                            ),
                             "risk",
                           )
                         : "rgb(120, 120, 120)",
                     }}
                   >
-                    {scoreData ? `${calculateGreenwashRisk(scoreData)}%` : "--"}
+                    {scoreData
+                      ? `${Math.round(scoreData.vulnerable_clauses.reduce((sum, c) => sum + c.vulnerability_score, 0) / scoreData.vulnerable_clauses.length)}%`
+                      : "--"}
                   </div>
                 </div>
               </div>
@@ -1148,7 +1170,6 @@ export default function StartupDetail() {
                             <div
                               className="h-full rounded-full transition-all duration-500"
                               style={{
-                                letterSpacing: "-0.25rem",
                                 width: `${clause.vulnerability_score}%`,
                                 background: getVulnerabilityColor(
                                   clause.vulnerability_score,
@@ -1236,7 +1257,7 @@ export default function StartupDetail() {
                   </div>
                 ) : (
                   <div className="space-y-5">
-                    {/* Vulnerability Score (no background, just text) */}
+                    {/* Vulnerability Score */}
                     <div className="flex items-center gap-3">
                       <span
                         className="font-bold"
@@ -1251,11 +1272,14 @@ export default function StartupDetail() {
                       </span>
                     </div>
 
-                    {/* Vulnerable Text - More Prominent */}
+                    {/* Vulnerable Text */}
                     <div>
                       <div
                         className="text-xs font-bold mb-2 uppercase"
-                        style={{ color: "rgb(85, 81, 46)", fontSize: "1.5rem" }}
+                        style={{
+                          color: "rgb(85, 81, 46)",
+                          fontSize: "1.5rem",
+                        }}
                       >
                         Vulnerable Text
                       </div>
@@ -1268,7 +1292,10 @@ export default function StartupDetail() {
                       >
                         <p
                           className="text-base font-medium"
-                          style={{ color: "rgb(85, 81, 46)", lineHeight: 1.1 }}
+                          style={{
+                            color: "rgb(85, 81, 46)",
+                            lineHeight: 1.1,
+                          }}
                         >
                           {selectedClause.clause_text}
                         </p>
@@ -1277,9 +1304,8 @@ export default function StartupDetail() {
 
                     {selectedClause.notes && (
                       <div
-                        className="text-xs font-bold mb-2 "
+                        className="text-xs font-bold mb-2"
                         style={{
-                          borderRadius: 0,
                           fontSize: "1.5rem",
                           color: "rgb(85, 81, 46)",
                         }}
@@ -1337,482 +1363,312 @@ export default function StartupDetail() {
             </div>
           </div>
 
-          {/* Floating AI Assistant Button */}
-          <button
-            onClick={() => setChatOpen(true)}
-            disabled={!scoreData}
-            className="fixed bottom-8 right-8 z-50 flex items-center gap-3 px-6 py-4 rounded-full shadow-2xl transition-all hover:scale-105 hover:shadow-xl"
-            style={{
-              background: scoreData
-                ? "linear-gradient(135deg, rgb(20, 54, 17) 0%, rgb(40, 90, 30) 100%)"
-                : "rgb(120, 120, 120)",
-              color: "rgb(237, 243, 189)",
-              opacity: scoreData ? 1 : 0.6,
-            }}
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="24"
-              height="24"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-            </svg>
-            <div className="text-left">
-              <div className="font-bold text-sm">AI Assistant</div>
-              <div className="text-xs opacity-80">Resolve vulnerabilities</div>
-            </div>
-            {scoreData &&
-              scoreData.vulnerable_clauses.length - resolvedClauses.size >
-                0 && (
-                <div
-                  className="absolute -top-2 -right-2 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold animate-pulse"
-                  style={{ background: "rgb(180, 60, 40)", color: "white" }}
-                >
-                  {scoreData.vulnerable_clauses.length - resolvedClauses.size}
-                </div>
-              )}
-          </button>
-
-          {/* Chat Modal */}
-          {chatOpen && (
-            <div
-              className="fixed inset-0 z-[100] flex items-center justify-center px-4"
-              style={{ background: "rgba(20, 30, 20, 0.85)" }}
-              onClick={() => setChatOpen(false)}
-            >
+          {/* AI VULNERABILITY RESOLVER SECTION - Card-Based Layout */}
+          {scoreData && (
+            <div data-ai-resolver>
+              {/* AI Vulnerability Resolver Title (styled like startup name) */}
               <div
-                className="w-full max-w-4xl h-[85vh] rounded-2xl shadow-2xl overflow-hidden flex flex-col"
-                style={{ background: "rgb(237, 243, 189)" }}
-                onClick={(e) => e.stopPropagation()}
+                style={{
+                  fontFamily: "Playfair Display, serif",
+                  fontWeight: 400,
+                  fontSize: "5rem",
+                  color: "rgb(237, 243, 189)",
+                  letterSpacing: "-0.04em",
+                  lineHeight: 1,
+                  marginBottom: "0.5rem",
+                  marginTop: "7rem",
+                  textShadow: "0 2px 16px rgba(36,44,32,0.18)",
+                  textAlign: "left",
+                }}
               >
-                {/* Chat Header */}
+                ai vulnerability resolver
+              </div>
+
+              {/* Two Column Layout */}
+              <div className="grid grid-cols-1 xl:grid-cols-[1fr_340px] gap-6">
+                {/* Left Column: Chat */}
                 <div
-                  className="flex items-center justify-between px-6 py-4"
-                  style={{
-                    background:
-                      "linear-gradient(135deg, rgb(56, 58, 45) 0%, rgb(36, 44, 32) 100%)",
-                  }}
+                  className="bg-[rgb(237,243,189)] shadow rounded-lg overflow-hidden flex flex-col"
+                  style={{ height: "600px" }}
                 >
-                  <div className="flex items-center gap-3">
-                    <div
-                      className="w-10 h-10 rounded-full flex items-center justify-center"
-                      style={{ background: "rgb(20, 54, 17)" }}
-                    >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        width="20"
-                        height="20"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="rgb(237, 243, 189)"
-                        strokeWidth="2"
-                      >
-                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-                      </svg>
-                    </div>
-                    <div>
+                  {/* Chat Messages */}
+                  <div
+                    className="flex-1 overflow-y-auto p-4 space-y-4"
+                    style={{ background: "rgb(250, 245, 235)" }}
+                  >
+                    {chatMessages.length === 0 ? (
                       <div
-                        className="font-bold text-lg"
+                        className="h-full flex flex-col items-center justify-center text-center"
+                        style={{ color: "rgb(85, 81, 46)" }}
+                      >
+                        <div
+                          style={{
+                            fontFamily: "Playfair Display, serif",
+                            fontSize: "1.8rem",
+                            fontWeight: 400,
+                            marginBottom: "12px",
+                            color: "rgb(85, 81, 46)",
+                          }}
+                        >
+                          start a conversation
+                        </div>
+                        <div className="text-xs opacity-70 max-w-xs">
+                          ask about vulnerabilities, request rectified clauses,
+                          or generate investor communications
+                        </div>
+                      </div>
+                    ) : (
+                      chatMessages.map((msg, idx) => (
+                        <div
+                          key={idx}
+                          className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
+                        >
+                          <div
+                            className="max-w-[80%] rounded-lg px-4 py-2 text-sm"
+                            style={{
+                              background:
+                                msg.role === "user"
+                                  ? "rgb(20, 54, 17)"
+                                  : "white",
+                              color:
+                                msg.role === "user"
+                                  ? "white"
+                                  : "rgb(26, 28, 18)",
+                              boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+                            }}
+                          >
+                            {msg.text}
+                          </div>
+                        </div>
+                      ))
+                    )}
+                    {chatLoading && (
+                      <div className="flex justify-start">
+                        <div
+                          className="rounded-lg px-4 py-2"
+                          style={{ background: "white" }}
+                        >
+                          <div className="flex items-center gap-2">
+                            <div
+                              className="w-2 h-2 rounded-full"
+                              style={{
+                                background: "rgb(20, 54, 17)",
+                                animation: "pulse 1s infinite",
+                              }}
+                            />
+                            <div
+                              className="w-2 h-2 rounded-full"
+                              style={{
+                                background: "rgb(20, 54, 17)",
+                                animation: "pulse 1s infinite 0.2s",
+                              }}
+                            />
+                            <div
+                              className="w-2 h-2 rounded-full"
+                              style={{
+                                background: "rgb(20, 54, 17)",
+                                animation: "pulse 1s infinite 0.4s",
+                              }}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Chat Input */}
+                  <form
+                    onSubmit={handleSendChat}
+                    className="p-4 border-t"
+                    style={{ borderColor: "rgb(200, 190, 160)" }}
+                  >
+                    <div className="flex gap-3">
+                      <input
+                        type="text"
+                        value={chatInput}
+                        onChange={(e) => setChatInput(e.target.value)}
+                        placeholder="Ask about vulnerabilities..."
+                        className="flex-1 px-3 py-2 rounded border text-sm focus:outline-none"
                         style={{
-                          color: "rgb(237, 243, 189)",
-                          fontFamily: "Playfair Display, serif",
+                          background: "white",
+                          borderColor: "rgb(200, 190, 160)",
+                        }}
+                        disabled={chatLoading}
+                      />
+                      <button
+                        type="submit"
+                        disabled={!chatInput.trim() || chatLoading}
+                        className="px-4 py-2 text-sm font-semibold rounded transition-all"
+                        style={{
+                          background:
+                            chatInput.trim() && !chatLoading
+                              ? "rgb(20, 54, 17)"
+                              : "rgb(120, 120, 120)",
+                          color: "white",
                         }}
                       >
-                        AI Vulnerability Resolver
-                      </div>
-                      <div
-                        className="text-xs"
-                        style={{ color: "rgb(180, 180, 140)" }}
-                      >
-                        Chat to resolve clauses, get suggestions, generate
-                        emails
-                      </div>
+                        Send
+                      </button>
                     </div>
-                  </div>
-                  <button
-                    onClick={() => setChatOpen(false)}
-                    className="p-2 rounded-full hover:bg-white/10 transition-colors"
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="24"
-                      height="24"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="rgb(237, 243, 189)"
-                      strokeWidth="2"
-                    >
-                      <line x1="18" y1="6" x2="6" y2="18" />
-                      <line x1="6" y1="6" x2="18" y2="18" />
-                    </svg>
-                  </button>
+                  </form>
                 </div>
 
-                {/* Chat Content */}
-                <div className="flex flex-1 overflow-hidden">
-                  {/* Messages Area */}
-                  <div className="flex-1 flex flex-col">
+                {/* Right Column: Controls & Clauses */}
+                <div className="flex flex-col gap-6">
+                  {/* Current Clause Card */}
+                  {currentChatClause && (
                     <div
-                      className="flex-1 overflow-y-auto p-4 space-y-4"
-                      style={{ background: "rgb(250, 245, 235)" }}
-                    >
-                      {chatMessages.length === 0 ? (
-                        <div
-                          className="h-full flex flex-col items-center justify-center text-center"
-                          style={{ color: "rgb(85, 81, 46)" }}
-                        >
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            width="48"
-                            height="48"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="1.5"
-                            className="mb-4 opacity-50"
-                          >
-                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-                          </svg>
-                          <div className="font-semibold mb-2">
-                            Start a conversation
-                          </div>
-                          <div className="text-sm opacity-70 max-w-xs">
-                            Ask about vulnerabilities, request rectified
-                            clauses, or generate investor communications
-                          </div>
-                        </div>
-                      ) : (
-                        chatMessages.map((msg, idx) => (
-                          <div
-                            key={idx}
-                            className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
-                          >
-                            <div
-                              className={`max-w-[80%] rounded-2xl px-4 py-3 ${
-                                msg.role === "user"
-                                  ? "text-white"
-                                  : "text-green-950"
-                              }`}
-                              style={{
-                                background:
-                                  msg.role === "user"
-                                    ? "rgb(20, 54, 17)"
-                                    : "white",
-                                boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-                              }}
-                            >
-                              <div className="text-xs font-semibold mb-1 opacity-70">
-                                {msg.role === "user" ? "You" : "AI Assistant"}
-                              </div>
-                              {msg.role === "assistant" ? (
-                                <div className="text-sm">
-                                  <ReactMarkdown
-                                    remarkPlugins={[remarkGfm]}
-                                    components={{
-                                      p: ({ children }) => (
-                                        <p className="mb-2 last:mb-0">{children}</p>
-                                      ),
-                                      ul: ({ children }) => (
-                                        <ul className="list-disc pl-5 mb-2 last:mb-0">
-                                          {children}
-                                        </ul>
-                                      ),
-                                      ol: ({ children }) => (
-                                        <ol className="list-decimal pl-5 mb-2 last:mb-0">
-                                          {children}
-                                        </ol>
-                                      ),
-                                      li: ({ children }) => <li>{children}</li>,
-                                      code: ({ children }) => (
-                                        <code className="px-1 py-0.5 rounded bg-black/10">
-                                          {children}
-                                        </code>
-                                      ),
-                                    }}
-                                  >
-                                    {msg.text}
-                                  </ReactMarkdown>
-                                </div>
-                              ) : (
-                                <div className="text-sm whitespace-pre-wrap">
-                                  {msg.text}
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        ))
-                      )}
-                      {chatLoading && (
-                        <div className="flex justify-start">
-                          <div
-                            className="rounded-2xl px-4 py-3 bg-white text-green-950 shadow"
-                            style={{ boxShadow: "0 2px 8px rgba(0,0,0,0.1)" }}
-                          >
-                            <div className="flex items-center gap-2">
-                              <div
-                                className="w-2 h-2 rounded-full"
-                                style={{
-                                  background: "rgb(20, 54, 17)",
-                                  animation: "pulse 1s infinite",
-                                }}
-                              />
-                              <div
-                                className="w-2 h-2 rounded-full"
-                                style={{
-                                  background: "rgb(20, 54, 17)",
-                                  animation: "pulse 1s infinite 0.2s",
-                                }}
-                              />
-                              <div
-                                className="w-2 h-2 rounded-full"
-                                style={{
-                                  background: "rgb(20, 54, 17)",
-                                  animation: "pulse 1s infinite 0.4s",
-                                }}
-                              />
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Chat Input */}
-                    <form
-                      onSubmit={handleSendChat}
-                      className="p-4 border-t"
+                      className={`bg-[rgb(237,243,189)] shadow p-4 ${sairaExtraCondensed.className}`}
                       style={{
-                        background: "rgb(237, 243, 189)",
-                        borderColor: "rgb(200, 190, 160)",
+                        borderLeft: `4px solid ${getVulnerabilityColor(currentChatClause.vulnerability_score)}`,
+                        color: "rgb(26, 28, 18)",
                       }}
                     >
-                      <div className="flex gap-3">
-                        <input
-                          type="text"
-                          value={chatInput}
-                          onChange={(e) => setChatInput(e.target.value)}
-                          placeholder="Ask about vulnerabilities, request fixes..."
-                          className="flex-1 px-4 py-3 rounded-xl border focus:outline-none focus:ring-2"
-                          style={{
-                            background: "white",
-                            borderColor: "rgb(200, 190, 160)",
-                            focusRingColor: "rgb(20, 54, 17)",
-                          }}
-                          disabled={chatLoading}
-                        />
-                        <button
-                          type="submit"
-                          disabled={!chatInput.trim() || chatLoading}
-                          className="px-6 py-3 rounded-xl font-semibold transition-all hover:scale-105"
-                          style={{
-                            background:
-                              chatInput.trim() && !chatLoading
-                                ? "rgb(20, 54, 17)"
-                                : "rgb(120, 120, 120)",
-                            color: "white",
-                          }}
-                        >
-                          Send
-                        </button>
+                      <div
+                        className="font-bold text-lg mb-2"
+                        style={{
+                          lineHeight: "0.9",
+                          letterSpacing: "-0.02em",
+                        }}
+                      >
+                        CURRENT CLAUSE
                       </div>
-                    </form>
+                      <div
+                        className="text-xs font-bold mb-2"
+                        style={{
+                          background: getVulnerabilityColor(
+                            currentChatClause.vulnerability_score,
+                          ),
+                          color: "white",
+                          padding: "4px 8px",
+                          display: "inline-block",
+                        }}
+                      >
+                        Score {currentChatClause.vulnerability_score}
+                      </div>
+                      <p
+                        className="text-xs line-clamp-4"
+                        style={{ color: "rgb(50, 50, 40)" }}
+                      >
+                        {currentChatClause.clause_text}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Action Buttons */}
+                  <div className="space-y-2">
+                    <button
+                      onClick={handleResolveClause}
+                      disabled={
+                        !currentChatClause || resolvingClauseIdx !== null
+                      }
+                      className={`w-full p-3 text-sm font-bold rounded transition-all ${sairaExtraCondensed.className}`}
+                      style={{
+                        background: currentChatClause
+                          ? "rgb(20, 100, 40)"
+                          : "rgb(120, 120, 120)",
+                        color: "white",
+                        letterSpacing: "0.03em",
+                      }}
+                    >
+                      RESOLVE
+                    </button>
+                    <button
+                      onClick={handleGetRectifiedClause}
+                      disabled={!currentChatClause || chatLoading}
+                      className={`w-full p-3 text-sm font-bold rounded transition-all ${sairaExtraCondensed.className}`}
+                      style={{
+                        background: currentChatClause
+                          ? "rgb(40, 80, 140)"
+                          : "rgb(120, 120, 120)",
+                        color: "white",
+                        letterSpacing: "0.03em",
+                      }}
+                    >
+                      GET FIXED CLAUSE
+                    </button>
+                    <button
+                      onClick={handleGenerateEmail}
+                      disabled={!currentChatClause || chatLoading}
+                      className={`w-full p-3 text-sm font-bold rounded transition-all ${sairaExtraCondensed.className}`}
+                      style={{
+                        background: currentChatClause
+                          ? "rgb(140, 100, 40)"
+                          : "rgb(120, 120, 120)",
+                        color: "white",
+                        letterSpacing: "0.03em",
+                      }}
+                    >
+                      GENERATE EMAIL
+                    </button>
                   </div>
 
-                  {/* Chat Actions Sidebar */}
+                  {/* Vulnerabilities List */}
                   <div
-                    className="w-72 p-4 border-l flex flex-col"
+                    className={`bg-[rgb(237,243,189)] shadow p-4 ${sairaExtraCondensed.className}`}
                     style={{
-                      background: "rgb(230, 220, 190)",
-                      borderColor: "rgb(200, 190, 160)",
+                      color: "rgb(26, 28, 18)",
+                      maxHeight: "300px",
+                      overflowY: "auto",
                     }}
                   >
                     <div
-                      className={`${sairaExtraCondensed.className} flex-1 overflow-hidden flex flex-col`}
+                      className="font-bold text-lg mb-3"
+                      style={{
+                        lineHeight: "0.9",
+                        letterSpacing: "-0.02em",
+                      }}
                     >
-                      {/* Clause Navigation */}
-                      <div className="mb-4">
-                        <div className="flex items-center justify-between mb-3">
-                          <div
-                            className="font-bold text-lg"
-                            style={{ color: "rgb(26, 28, 18)" }}
-                          >
-                            VULNERABILITIES
-                          </div>
-                          <div
-                            className="text-xs font-semibold px-2 py-1 rounded"
-                            style={{
-                              background: "rgb(20, 54, 17)",
-                              color: "white",
-                            }}
-                          >
-                            {getUnresolvedClauses().length} remaining
-                          </div>
-                        </div>
-
-                        {/* Navigation */}
-                        {getUnresolvedClauses().length > 0 && (
-                          <div className="flex items-center justify-between mb-3">
-                            <button
-                              onClick={goToPrevClause}
-                              disabled={chatClauseIndex === 0}
-                              className="px-3 py-1 rounded text-sm font-semibold disabled:opacity-30"
-                              style={{
-                                background: "rgb(85, 81, 46)",
-                                color: "white",
-                              }}
-                            >
-                              ← Prev
-                            </button>
-                            <span
-                              className="text-sm"
-                              style={{ color: "rgb(85, 81, 46)" }}
-                            >
-                              {chatClauseIndex + 1} /{" "}
-                              {getUnresolvedClauses().length}
-                            </span>
-                            <button
-                              onClick={goToNextClause}
-                              disabled={
-                                chatClauseIndex >=
-                                getUnresolvedClauses().length - 1
-                              }
-                              className="px-3 py-1 rounded text-sm font-semibold disabled:opacity-30"
-                              style={{
-                                background: "rgb(85, 81, 46)",
-                                color: "white",
-                              }}
-                            >
-                              Next →
-                            </button>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Current Clause Detail */}
-                      <div className="mb-4">
-                        {currentChatClause ? (
-                          <div
-                            className="p-3 rounded-lg"
-                            style={{
-                              background: "rgb(255, 250, 245)",
-                              borderLeft: `4px solid ${getVulnerabilityColor(currentChatClause.vulnerability_score)}`,
-                            }}
-                          >
-                            <div className="flex items-center justify-between gap-2 mb-2">
-                              <span
-                                className="text-xs font-semibold uppercase"
-                                style={{ color: "rgb(85, 81, 46)" }}
-                              >
-                                Current Clause
-                              </span>
-                              <span
-                                className="font-bold text-xs px-2 py-0.5 rounded"
-                                style={{
-                                  background: getVulnerabilityColor(
-                                    currentChatClause.vulnerability_score,
-                                  ),
-                                  color: "white",
-                                }}
-                              >
-                                Score {currentChatClause.vulnerability_score}
-                              </span>
-                            </div>
-                            <p
-                              className="text-sm font-medium leading-relaxed line-clamp-5"
-                              style={{ color: "rgb(20, 20, 15)" }}
-                            >
-                              {currentChatClause.clause_text}
-                            </p>
-                          </div>
-                        ) : (
-                          <div
-                            className="text-center py-4 rounded-lg"
-                            style={{
-                              background: "rgb(255, 250, 245)",
-                              color: "rgb(20, 100, 40)",
-                            }}
-                          >
-                            <div className="font-bold">All clauses resolved</div>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Actions */}
-                      <div
-                        className="space-y-2 pt-3 border-t"
-                        style={{ borderColor: "rgb(180, 170, 140)" }}
-                      >
-                        <button
-                          onClick={handleResolveClause}
-                          disabled={
-                            !currentChatClause || resolvingClauseIdx !== null
-                          }
-                          className="w-full p-3 rounded-lg text-center transition-all hover:scale-[1.02] disabled:opacity-50"
-                          style={{
-                            background: "rgb(20, 100, 40)",
-                            color: "white",
-                          }}
-                        >
-                          <div className="font-bold text-sm">
-                            Resolve This Clause
-                          </div>
-                          <div className="text-xs opacity-80">
-                            Move to next automatically
-                          </div>
-                        </button>
-
-                        <button
-                          onClick={handleGetRectifiedClause}
-                          disabled={!currentChatClause || chatLoading}
-                          className="w-full p-3 rounded-lg text-center transition-all hover:scale-[1.02] disabled:opacity-50"
-                          style={{
-                            background: "rgb(40, 80, 140)",
-                            color: "white",
-                          }}
-                        >
-                          <div className="font-bold text-sm">
-                            Get Fixed Clause
-                          </div>
-                          <div className="text-xs opacity-80">
-                            AI-generated replacement
-                          </div>
-                        </button>
-
-                        <button
-                          onClick={handleGenerateEmail}
-                          disabled={chatLoading}
-                          className="w-full p-3 rounded-lg text-center transition-all hover:scale-[1.02] disabled:opacity-50"
-                          style={{
-                            background: "rgb(140, 100, 40)",
-                            color: "white",
-                          }}
-                        >
-                          <div className="font-bold text-sm">
-                            Generate Email
-                          </div>
-                          <div className="text-xs opacity-80">
-                            Investor communication
-                          </div>
-                        </button>
-                      </div>
-
-                      {/* Status */}
-                      <div
-                        className="mt-4 pt-3 border-t text-xs"
-                        style={{
-                          borderColor: "rgb(180, 170, 140)",
-                          color: "rgb(85, 81, 46)",
-                        }}
-                      >
-                        Status:{" "}
-                        <span className="font-semibold">{chatStatus}</span>
-                      </div>
+                      REMAINING
                     </div>
+                    <div className="space-y-2">
+                      {getUnresolvedClauses().map((clause, idx) => (
+                        <div
+                          key={idx}
+                          onClick={() => {
+                            setChatClauseIndex(idx);
+                            setSelectedClause(clause);
+                          }}
+                          className="p-2 rounded cursor-pointer transition-all text-xs"
+                          style={{
+                            background:
+                              currentChatClause === clause
+                                ? "rgb(255, 250, 245)"
+                                : "white",
+                            borderLeft: `3px solid ${getVulnerabilityColor(clause.vulnerability_score)}`,
+                          }}
+                        >
+                          <div
+                            className="font-bold mb-1"
+                            style={{
+                              color: getVulnerabilityColor(
+                                clause.vulnerability_score,
+                              ),
+                            }}
+                          >
+                            {clause.vulnerability_score}
+                          </div>
+                          <p
+                            className="line-clamp-2"
+                            style={{ color: "rgb(50, 50, 40)" }}
+                          >
+                            {clause.clause_text}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Status */}
+                  <div
+                    className={`bg-[rgb(237,243,189)] shadow p-3 text-center text-xs ${sairaExtraCondensed.className}`}
+                    style={{
+                      color: "rgb(85, 81, 46)",
+                      fontWeight: 600,
+                      letterSpacing: "0.02em",
+                    }}
+                  >
+                    Status: {chatStatus}
                   </div>
                 </div>
               </div>
@@ -1861,7 +1717,7 @@ export default function StartupDetail() {
                   <div className="mt-6 flex justify-end gap-3">
                     <button
                       onClick={() => setEmailModalOpen(false)}
-                      className="px-5 py-2 rounded-lg font-semibold"
+                      className="px-5 py-2 font-semibold"
                       style={{
                         border: "2px solid rgb(85, 81, 46)",
                         color: "rgb(85, 81, 46)",
@@ -1872,7 +1728,6 @@ export default function StartupDetail() {
                     <button
                       onClick={() => {
                         setEmailModalOpen(false);
-                        setChatOpen(false);
                         setChatMessages((prev) => [
                           ...prev,
                           {
@@ -1881,8 +1736,11 @@ export default function StartupDetail() {
                           },
                         ]);
                       }}
-                      className="px-5 py-2 rounded-lg font-semibold"
-                      style={{ background: "rgb(20, 54, 17)", color: "white" }}
+                      className="px-5 py-2 font-semibold"
+                      style={{
+                        background: "rgb(20, 54, 17)",
+                        color: "white",
+                      }}
                     >
                       Accept and Send
                     </button>
