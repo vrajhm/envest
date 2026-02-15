@@ -14,6 +14,4 @@ Workflow:
 5. Retrieve paths via `GET /v1/reviews/sessions/{session_id}/artifacts`.
 
 Artifacts (local storage):
-- `be/rag_agent/artifacts/{session_id}/revised_document.txt`
-- `be/rag_agent/artifacts/{session_id}/revised_document.pdf`
 - `be/rag_agent/artifacts/{session_id}/investor_email.txt`

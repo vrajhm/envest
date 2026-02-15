@@ -240,6 +240,11 @@ class ScoreBody(BaseModel):
     top_k: int | None = None
 
 
+class RetrieveBody(BaseModel):
+    query: str
+    top_k: int | None = None
+
+
 class IngestBody(BaseModel):
     use_cache_on_score_failure: bool = True
 
@@ -331,7 +336,7 @@ Company-Specific Patterns:
 - Mining: Tailings dams, Indigenous consent, rehabilitation bonds
 
 If a clause resembles language from any of the above cases, include a comparable example in similar_bad_examples with the company name and year.
-If no known example applies, return an empty array [].
+Always include at least one object in similar_bad_examples for each vulnerable clause.
 
 --------------------------------------------------
 RELEVANT EXCERPTS (ONLY THESE MAY BE USED):
@@ -394,9 +399,11 @@ Output only valid JSON with no other text. Use this exact structure:
 For each vulnerable clause:
 - vulnerability_score must be 0–100.
 - similar_bad_examples must be an array of objects with example_clause and source.
-- If no known comparable example exists, return [].
+- similar_bad_examples must never be empty; include at least one best-fit comparable example.
 - Do not fabricate historical examples.
 - Do not invent excerpts not present in the provided text.
+- Return at most 5 vulnerable clauses total.
+- If many candidates exist, select the 5 most prominent clauses that cover different issue types (avoid near-duplicates).
 
 Be skeptical, analytical, and investor-focused.
 """
@@ -512,6 +519,38 @@ async def parse_document(file: UploadFile | None = File(None)):
     return markdown
 
 
+@app.post("/retrieve")
+async def retrieve_chunks_for_chat(body: RetrieveBody):
+    """
+    Retrieve a small number of semantic chunks from the latest parsed document.
+    Used by chat to keep prompts short while adding relevant context.
+    """
+    if not _last_markdown:
+        raise HTTPException(
+            status_code=400,
+            detail="No document parsed yet. Call POST /parse first.",
+        )
+    query = body.query.strip()
+    if not query:
+        raise HTTPException(status_code=400, detail="query must be non-empty.")
+
+    top_k = body.top_k if body.top_k is not None else 3
+    top_k = max(1, min(top_k, 10))
+
+    chunks = _retrieve_chunks(query, top_k)
+    if not chunks:
+        await asyncio.to_thread(_build_vector_index, _last_markdown)
+        chunks = _retrieve_chunks(query, top_k)
+
+    if not chunks:
+        raise HTTPException(
+            status_code=503,
+            detail="Vector index unavailable. Set GOOGLE_API_KEY and call POST /parse again.",
+        )
+
+    return {"chunks": chunks, "count": len(chunks), "top_k": top_k}
+
+
 @app.get("/score")
 async def score_contract():
     """
@@ -575,8 +614,27 @@ async def score_contract():
         for clause in result["vulnerable_clauses"]:
             if not isinstance(clause, dict):
                 continue
-            if "similar_bad_examples" not in clause or not isinstance(clause["similar_bad_examples"], list):
-                clause["similar_bad_examples"] = []
+            examples = clause.get("similar_bad_examples")
+            if not isinstance(examples, list):
+                examples = []
+            cleaned_examples = []
+            for example in examples:
+                if not isinstance(example, dict):
+                    continue
+                example_clause = str(example.get("example_clause", "")).strip()
+                source = str(example.get("source", "")).strip()
+                if example_clause and source:
+                    cleaned_examples.append(
+                        {"example_clause": example_clause, "source": source}
+                    )
+            if not cleaned_examples:
+                cleaned_examples = [
+                    {
+                        "example_clause": "No direct historical match provided; closest criticized ESG pattern should be manually validated.",
+                        "source": "Manual review required",
+                    }
+                ]
+            clause["similar_bad_examples"] = cleaned_examples
         _write_score_cache(result)
         return result
     except json.JSONDecodeError as e:

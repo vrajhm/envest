@@ -1,244 +1,80 @@
 {
-  "cached_at": "2026-02-14T21:53:19.175948Z",
+  "cached_at": "2026-02-15T00:14:48.457803Z",
   "payload": {
     "overall_trust_score": 48,
     "per_goal_scores": [
       {
         "goal": "Carbon Reduction",
         "score": 50,
-        "notes": "Net-zero target by 2050 is undermined by lack of interim targets and heavy reliance on offsets. Scope 3 emissions are acknowledged but poorly addressed."
+        "notes": "Vague targets, heavy reliance on offsets, no clear interim goals."
       },
       {
         "goal": "Public Health Impact",
         "score": 40,
-        "notes": "Limited discussion of direct public health impacts. Mentions safety, but incident rates increased. Community engagement is primarily philanthropic."
+        "notes": "Limited discussion, no specific metrics beyond safety incident rates."
       },
       {
         "goal": "Climate Adaptation",
         "score": 55,
-        "notes": "Climate risk assessment is in early stages. Adaptation strategies are vague and lack concrete commitments."
+        "notes": "Early stages of risk assessment, no concrete adaptation strategies."
       }
     ],
-    "syntax_notes": "The report uses aspirational language and hedging, undermining its credibility. There are numerous instances of 'aim to,' 'seek to,' and 'where feasible,' which weaken commitments. Data limitations are acknowledged, but the extent of reliance on estimates is concerning.",
+    "syntax_notes": "Report uses aspirational language and lacks specific, measurable, time-bound targets. Disclaimers undermine commitments.",
     "vulnerable_clauses": [
       {
-        "clause_text": "We aspire to achieve net-zero emissions by 2050, subject to technological advancement, economic viability, and market conditions.",
+        "clause_text": "GreenTech Innovations is committed to playing our part in addressing climate change. We aspire to achieve net-zero emissions by 2050, subject to technological advancement, economic viability, and market conditions.",
         "vulnerability_score": 75,
-        "notes": "The 'subject to' clause creates a significant loophole, allowing the company to abandon its net-zero target if it deems it too expensive or technologically challenging. No interim targets are specified.",
+        "notes": "Net-zero by 2050 with multiple escape clauses weakens the commitment.",
         "similar_bad_examples": [
           {
-            "example_clause": "Shell's \"major oil company\" sustainability reports with vague \"net zero\" goals",
-            "source": "Shell's Sustainability Reports"
+            "example_clause": "Shell aims to achieve net-zero emissions by 2050, in step with society.",
+            "source": "Shell Sustainability Report 2021"
           }
         ]
       },
       {
-        "clause_text": "Our pathway to net-zero will involve a combination of emissions reductions, efficiency improvements, renewable energy adoption, and carbon offsetting strategies.",
-        "vulnerability_score": 65,
-        "notes": "The inclusion of 'carbon offsetting strategies' without specifying the quality or type of offsets raises concerns about greenwashing. Offsets are often used to mask a lack of real emissions reductions.",
+        "clause_text": "Our pathway to net-zero will involve a combination of emissions reductions, efficiency improvements, renewable energy adoption, and carbon offsetting strategies. Specific interim targets and timelines are under development and will be announced when our assessment is complete.",
+        "vulnerability_score": 80,
+        "notes": "Reliance on offsets and deferred interim targets raise concerns.",
         "similar_bad_examples": [
           {
-            "example_clause": "Amazon's \"Climate Pledge\" using carbon offsets instead of actual emissions reductions",
+            "example_clause": "Amazon's Climate Pledge relies heavily on carbon offsets instead of actual emissions reductions.",
             "source": "Amazon's Climate Pledge"
-          }
-        ]
-      },
-      {
-        "clause_text": "We aim to improve energy efficiency across our facilities through equipment upgrades and operational optimization where cost-effective",
-        "vulnerability_score": 70,
-        "notes": "'Where cost-effective' provides a significant loophole, allowing the company to avoid energy efficiency improvements if they are deemed too expensive.",
-        "similar_bad_examples": [
-          {
-            "example_clause": "We aim to...",
-            "source": "Common Loopholes to Detect"
-          }
-        ]
-      },
-      {
-        "clause_text": "We intend to explore additional renewable energy procurement options, including potential on-site generation, as opportunities arise",
-        "vulnerability_score": 60,
-        "notes": "'As opportunities arise' is vague and non-committal. There is no specific target or timeline for increasing renewable energy procurement.",
-        "similar_bad_examples": [
-          {
-            "example_clause": "We intend to...",
-            "source": "Common Loopholes to Detect"
-          }
-        ]
-      },
-      {
-        "clause_text": "We are evaluating the feasibility of transitioning to electric vehicles for our company fleet, subject to infrastructure availability and total cost of ownership considerations",
-        "vulnerability_score": 65,
-        "notes": "The commitment to fleet electrification is conditional on 'infrastructure availability and total cost of ownership considerations,' which could easily be used to justify inaction.",
-        "similar_bad_examples": [
-          {
-            "example_clause": "Up to X% electric driving",
-            "source": "Common Loopholes to Detect"
-          }
-        ]
-      },
-      {
-        "clause_text": "We encourage employees to consider environmental impact when making travel decisions and seek to reduce unnecessary travel where feasible",
-        "vulnerability_score": 70,
-        "notes": "'Where feasible' weakens the commitment to reducing business travel. There is no specific target or monitoring mechanism.",
-        "similar_bad_examples": [
-          {
-            "example_clause": "We seek to...",
-            "source": "Common Loopholes to Detect"
-          }
-        ]
-      },
-      {
-        "clause_text": "We will consider purchasing high-quality carbon offsets to address residual emissions that cannot be eliminated through direct reduction efforts",
-        "vulnerability_score": 60,
-        "notes": "Reliance on carbon offsets is problematic, especially without specifying the type or quality of offsets. This could be used to greenwash a lack of real emissions reductions.",
-        "similar_bad_examples": [
-          {
-            "example_clause": "Carbon neutral achieved through offsets rather than emissions reduction",
-            "source": "Common Loopholes to Detect"
-          }
-        ]
-      },
-      {
-        "clause_text": "We plan to engage with suppliers and partners to understand and potentially influence their emissions, recognizing that Scope 3 represents the majority of our footprint",
-        "vulnerability_score": 55,
-        "notes": "'Potentially influence' is weak and non-committal. The company acknowledges the importance of Scope 3 emissions but lacks concrete plans to address them.",
-        "similar_bad_examples": [
-          {
-            "example_clause": "Scope 3 emissions under evaluation",
-            "source": "Common Loopholes to Detect"
           }
         ]
       },
       {
         "clause_text": "While we have not yet implemented mandatory supplier audits or certification requirements, we engage with key suppliers on ESG topics and expect them to align with our values where practical.",
         "vulnerability_score": 70,
-        "notes": "The lack of mandatory audits and the 'where practical' clause weaken supply chain accountability. The percentage of suppliers assessed for ESG is very low (16%).",
+        "notes": "Weak supplier engagement and lack of mandatory audits create supply chain risks.",
         "similar_bad_examples": [
           {
-            "example_clause": "We aim to...",
-            "source": "Common Loopholes to Detect"
+            "example_clause": "Shein's \"long-term sustainability goals\" and \"social responsibility\" pages with minimal transparency on supplier audits",
+            "source": "Shein's Sustainability Pages"
           }
         ]
       },
       {
-        "clause_text": "We seek to expand our supplier engagement program over time and will consider implementing more robust assessment mechanisms as resources permit.",
+        "clause_text": "We intend to explore opportunities for emissions reduction where technologically and economically feasible, recognizing that rapid growth may temporarily impact our environmental metrics. Our long-term vision includes transitioning to cleaner energy sources, subject to availability and cost considerations.",
         "vulnerability_score": 65,
-        "notes": "'As resources permit' allows the company to delay or avoid implementing more robust assessment mechanisms.",
+        "notes": "\"Intend to explore\" and \"subject to availability and cost\" provide loopholes.",
         "similar_bad_examples": [
           {
-            "example_clause": "We seek to...",
-            "source": "Common Loopholes to Detect"
+            "example_clause": "We aim to improve energy efficiency across our facilities through equipment upgrades and operational optimization where cost-effective",
+            "source": "Shell Sustainability Report 2021"
           }
         ]
       },
       {
-        "clause_text": "Our approach balances supply chain resilience with sustainability objectives, recognizing the complexity of global sourcing relationships.",
-        "vulnerability_score": 50,
-        "notes": "This statement suggests that supply chain resilience may take precedence over sustainability objectives, potentially undermining ESG commitments.",
-        "similar_bad_examples": []
-      },
-      {
-        "clause_text": "Our waste management strategy emphasizes reduction, reuse, and recycling, though specific targets and timelines are under development as we refine our approach.",
-        "vulnerability_score": 60,
-        "notes": "The lack of specific targets and timelines for waste management weakens the commitment to circular economy principles.",
+        "clause_text": "The goals, targets, and aspirations described in this report are not guarantees of future performance. Our ability to achieve these objectives depends on numerous factors beyond our control, including technological developments, market conditions, regulatory changes, and business priorities. Nothing in this report should be construed as a binding commitment.",
+        "vulnerability_score": 90,
+        "notes": "Broad disclaimer undermines the entire report's credibility.",
         "similar_bad_examples": [
           {
-            "example_clause": "We aim to...",
-            "source": "Common Loopholes to Detect"
+            "example_clause": "These statements are subject to risks, uncertainties, and assumptions that could cause actual results to differ materially.",
+            "source": "Various ESG reports"
           }
         ]
-      },
-      {
-        "clause_text": "We believe in continuous improvement and will consider expanding our circular economy initiatives as opportunities emerge.",
-        "vulnerability_score": 55,
-        "notes": "'As opportunities emerge' is vague and non-committal. There is no guarantee that circular economy initiatives will be expanded.",
-        "similar_bad_examples": [
-          {
-            "example_clause": "We aim to...",
-            "source": "Common Loopholes to Detect"
-          }
-        ]
-      },
-      {
-        "clause_text": "We seek to increase diversity across all levels of the organization and will continue to evaluate our recruitment and retention practices. Our commitment to inclusion is reflected in our ongoing efforts to create equitable opportunities, though specific diversity targets remain under consideration.",
-        "vulnerability_score": 60,
-        "notes": "The lack of specific diversity targets weakens the commitment to diversity and inclusion. 'Under consideration' suggests that targets may never be set.",
-        "similar_bad_examples": [
-          {
-            "example_clause": "We aim to...",
-            "source": "Common Loopholes to Detect"
-          }
-        ]
-      },
-      {
-        "clause_text": "We continuously strive to improve our safety culture and will seek to implement additional safety measures as appropriate. Our goal is to achieve industry-leading safety performance over time, recognizing that workplace safety is an ongoing journey requiring sustained attention and resources.",
-        "vulnerability_score": 55,
-        "notes": "The increase in the Total Recordable Incident Rate (TRIR) and Lost Time Injury Frequency Rate (LTIFR) raises concerns about safety performance. 'As appropriate' weakens the commitment to implementing additional safety measures.",
-        "similar_bad_examples": [
-          {
-            "example_clause": "We aim to...",
-            "source": "Common Loopholes to Detect"
-          }
-        ]
-      },
-      {
-        "clause_text": "Our Board of Directors provides strategic oversight and ensures alignment with shareholder interests. The newly established ESG Committee will provide additional focus on sustainability matters, though its specific mandate and reporting structure are still being finalized.",
-        "vulnerability_score": 50,
-        "notes": "The ESG Committee's mandate and reporting structure are still being finalized, which raises concerns about its effectiveness.",
-        "similar_bad_examples": []
-      },
-      {
-        "clause_text": "Specific targets, timelines, and investment levels will be determined through our annual planning processes and communicated as decisions are finalized.",
-        "vulnerability_score": 60,
-        "notes": "This statement allows the company to delay or avoid setting specific targets, timelines, and investment levels for ESG initiatives.",
-        "similar_bad_examples": []
-      },
-      {
-        "clause_text": "While our total emissions increased in FY2024 due to business expansion, we remain committed to reducing our carbon intensity over time. We intend to explore opportunities for emissions reduction where technologically and economically feasible, recognizing that rapid growth may temporarily impact our environmental metrics. Our long-term vision includes transitioning to cleaner energy sources, subject to availability and cost considerations.",
-        "vulnerability_score": 70,
-        "notes": "Focusing on carbon intensity instead of absolute emissions allows the company to increase its overall emissions while still claiming progress. The 'where technologically and economically feasible' clause provides a significant loophole.",
-        "similar_bad_examples": [
-          {
-            "example_clause": "Carbon intensity metrics instead of absolute emissions",
-            "source": "Common Loopholes to Detect"
-          }
-        ]
-      },
-      {
-        "clause_text": "We value stakeholder input and seek to incorporate feedback into our decision-making processes where appropriate. While we cannot accommodate all requests, we strive to balance diverse interests and maintain transparent communication about our ESG journey.",
-        "vulnerability_score": 45,
-        "notes": "The phrase 'where appropriate' allows the company to selectively incorporate stakeholder feedback, potentially ignoring concerns that are not aligned with its business priorities.",
-        "similar_bad_examples": []
-      },
-      {
-        "clause_text": "Data collection methodologies vary by metric and are based on available information systems and estimation techniques where direct measurement is not feasible.",
-        "vulnerability_score": 50,
-        "notes": "Reliance on estimation techniques raises concerns about data accuracy and reliability.",
-        "similar_bad_examples": []
-      },
-      {
-        "clause_text": "While we reference these frameworks, our disclosures are not subject to external verification and may not meet all requirements for full compliance. We are working to enhance our reporting capabilities over time and will consider third-party assurance for future reports as our processes mature.",
-        "vulnerability_score": 55,
-        "notes": "The lack of external verification undermines the credibility of the report. 'Consider third-party assurance' is non-committal.",
-        "similar_bad_examples": []
-      },
-      {
-        "clause_text": "Some metrics are based on estimates, assumptions, or limited sampling rather than comprehensive measurement. Scope 3 emissions calculations rely heavily on industry averages and supplier-provided data of varying quality. Social metrics may be incomplete due to voluntary self-disclosure or operational constraints.",
-        "vulnerability_score": 60,
-        "notes": "The reliance on estimates, industry averages, and incomplete data raises significant concerns about data quality and reliability.",
-        "similar_bad_examples": []
-      },
-      {
-        "clause_text": "These priorities reflect our aspirations and will be pursued subject to business conditions, resource availability, and strategic alignment.",
-        "vulnerability_score": 65,
-        "notes": "The 'subject to' clause allows the company to abandon its ESG priorities if business conditions, resource availability, or strategic alignment change.",
-        "similar_bad_examples": []
-      },
-      {
-        "clause_text": "Environmental impact estimates are based on theoretical scenarios and may not reflect actual customer results. Actual benefits will vary depending on implementation, usage patterns, and baseline conditions.",
-        "vulnerability_score": 55,
-        "notes": "The disclaimer that environmental impact estimates are based on theoretical scenarios and may not reflect actual customer results undermines the credibility of the claims.",
-        "similar_bad_examples": []
       }
     ]
   }
