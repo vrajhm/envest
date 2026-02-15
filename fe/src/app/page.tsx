@@ -28,60 +28,90 @@ export default function Home() {
       className="min-h-screen w-full relative flex items-center justify-center"
       style={{ background: "#0f240e", overflow: "hidden" }}
     >
-      {/* Placeholder button, only visible after animation */}
+      {/* Background image at the back */}
+      <div
+        style={{
+          position: "fixed",
+          inset: 0,
+          zIndex: 0,
+          backgroundImage: 'url("/background.png")',
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+        }}
+      />
+      {/* Muting overlay above background image */}
+      <div
+        style={{
+          position: "fixed",
+          inset: 0,
+          zIndex: 0.5,
+          background: "rgba(24, 36, 20, 0.62)",
+          pointerEvents: "none",
+        }}
+      />
+      {/* Vertical gradient mask from green to transparent */}
+      <div
+        style={{
+          position: "fixed",
+          inset: -20,
+          zIndex: 2,
+          pointerEvents: "none",
+          background:
+            "linear-gradient(to bottom, rgb(56, 58, 45) 0%, rgb(56, 58, 45) 2%, rgba(56,58,45,0.7) 8%, rgba(56,58,45,0.0) 20%, rgba(56,58,45,0.0) 80%, rgba(56,58,45,0.7) 92%, rgb(56, 58, 45) 98%, rgb(56, 58, 45) 100%)",
+        }}
+      />
+      {/* Large centered Playfair Display text after animation */}
+      {/* Large centered Playfair Display text after animation */}
       {animateUp && (
         <button
           onClick={() => router.push("/dashboard")}
           style={{
             position: "absolute",
+            top: "50%",
+            left: "50%",
+            zIndex: 10,
             textAlign: "center",
             width: "100vw",
             background: "none",
             border: "none",
             padding: 0,
             cursor: "pointer",
-            animation: "pulse 4s ease-in-out infinite 1.2s",
+            animation: "pulse 4s ease-in-out infinite",
           }}
         >
-          to dashboard (placeholder)
+          <span
+            style={{
+              fontFamily: "Playfair Display, serif",
+              fontWeight: 700,
+              fontStyle: "italic",
+              fontSize: "6.5rem",
+              color: "rgb(237, 243, 189)",
+              letterSpacing: "-0.08em",
+              display: "block",
+              marginLeft: "-4vw",
+              lineHeight: 1,
+            }}
+          >
+            conscious
+          </span>
+          <span
+            style={{
+              fontFamily: "Playfair Display, serif",
+              fontWeight: 400,
+              fontStyle: "normal",
+              fontSize: "6rem",
+              color: "rgb(237, 243, 189)",
+              letterSpacing: "-0.03em",
+              display: "block",
+              marginRight: "-10.5vw",
+              lineHeight: 1,
+              marginTop: "-1.7rem",
+            }}
+          >
+            investing
+          </span>
         </button>
-      )}
-      <div
-        style={{
-          position: "absolute",
-          inset: 0,
-          zIndex: 1,
-          opacity: showBgImage ? 1 : 0,
-          transition: "opacity 0.9s ease",
-        }}
-      >
-        <Image
-          src="/background.png"
-          alt="Landing background"
-          fill
-          style={{ objectFit: "cover" }}
-          priority
-        />
-      </div>
-      <span
-        style={{
-          position: "absolute",
-          top: "calc(50% + 140px)",
-          left: "50%",
-          transform: "translateX(-50%)",
-          display: "block",
-          fontFamily: "Montserrat, sans-serif",
-          fontWeight: 500,
-          fontSize: "0.9rem",
-          color: "rgb(237, 243, 189)",
-          letterSpacing: "0.05em",
-          opacity: 0.85,
-          textShadow: "0 1px 6px #222a1a",
-          zIndex: 10,
-        }}
-      >
-        get started ↑
-      </span>
+      )}{" "}
       {/* Animated landing overlay (beige paper) */}
       <div
         className="flex min-h-screen items-center justify-center font-sans relative"

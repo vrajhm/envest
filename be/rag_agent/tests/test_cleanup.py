@@ -24,4 +24,6 @@ def test_cleanup_generation() -> None:
         assert r.status_code == 200
         body = r.json()
         assert body["status"] == "completed"
-        assert "revised_pdf_path" in body["artifact_paths"]
+        assert "investor_email_path" in body["artifact_paths"]
+        assert "revised_pdf_path" not in body["artifact_paths"]
+        assert "revised_text_path" not in body["artifact_paths"]
