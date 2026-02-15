@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Smooch_Sans, Montserrat } from "next/font/google";
 import { Saira_Extra_Condensed } from "next/font/google";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import {
   dashboardSeed,
   dashboardStartups,
@@ -21,6 +21,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { AnalysisResultsDialog } from "@/components/AnalysisResultsDialog";
 
 const montserrat = Montserrat({
   subsets: ["latin"],
@@ -42,6 +43,22 @@ export default function Dashboard() {
   const [startupLocationInput, setStartupLocationInput] = useState("");
   const [isAddingStartup, setIsAddingStartup] = useState(false);
   const [addStartupError, setAddStartupError] = useState<string | null>(null);
+  const [analysisResult, setAnalysisResult] = useState<{
+    id: string;
+    transcript: string;
+    flagged_items: Array<{
+      category: string;
+      text: string;
+      confidence: number;
+      context?: string;
+    }>;
+    search_findings: Record<string, unknown>;
+    risk_score: number;
+    recommended_questions: string[];
+    company_name: string;
+    created_at: string;
+  } | null>(null);
+  const [analysisDialogOpen, setAnalysisDialogOpen] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -59,6 +76,56 @@ export default function Dashboard() {
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  const handleAnalysisSubmit = useCallback(async (data: {
+    transcript: string;
+    flagged_items: Array<{
+      category: string;
+      text: string;
+      confidence: number;
+      context?: string;
+    }>;
+    search_findings: Record<string, unknown>;
+    risk_score: number;
+    recommended_questions: string[];
+    company_name: string;
+  }) => {
+    try {
+      const response = await fetch("/api/analysis/submit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      const result = await response.json();
+      if (result.result) {
+        setAnalysisResult(result.result);
+        setAnalysisDialogOpen(true);
+      }
+    } catch (error) {
+      console.error("Failed to submit analysis:", error);
+    }
+  }, []);
+
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      if (event.data?.type === "elevenlabs_conversation_end") {
+        const conversationData = event.data;
+        if (conversationData?.transcript) {
+          handleAnalysisSubmit({
+            transcript: conversationData.transcript,
+            flagged_items: conversationData.flagged_items || [],
+            search_findings: conversationData.search_findings || {},
+            risk_score: conversationData.risk_score || 0,
+            recommended_questions: conversationData.recommended_questions || [],
+            company_name: conversationData.company_name || "Unknown Company",
+          });
+        }
+      }
+    };
+
+    window.addEventListener("message", handleMessage);
+    return () => window.removeEventListener("message", handleMessage);
+  }, [handleAnalysisSubmit]);
 
   const portfolioMetrics = dashboardSeed.portfolio_metrics;
   const canAddStartup =
@@ -142,25 +209,36 @@ export default function Dashboard() {
   };
 
   return (
-    <div
-      style={{
-        minHeight: "100vh",
-        width: "100%",
-        background: fadeIn
-          ? "linear-gradient(135deg, rgb(56, 58, 45) 60%, rgb(36, 44, 32) 100%)"
-          : "rgb(56, 58, 45)",
-        position: "relative",
-        transition: "background 0.8s cubic-bezier(.4,1.3,.6,1)",
-      }}
-    >
+    <>
+      <elevenlabs-convai
+        agent-id="agent_8901khg6hcr8ererwaemn92wvym5"
+        action-text="Memo Agent"
+        style={{ position: "fixed", bottom: "24px", right: "24px", zIndex: 9999 }}
+      ></elevenlabs-convai>
+      <AnalysisResultsDialog
+        open={analysisDialogOpen}
+        onOpenChange={setAnalysisDialogOpen}
+        result={analysisResult}
+      />
       <div
-        className={`${montserrat.className} min-h-screen w-full relative px-6 pt-32 pb-10`}
-        style={{
-          background: "transparent",
-          opacity: fadeIn ? 1 : 0,
-          transition: "opacity 0.8s cubic-bezier(.4,1.3,.6,1)",
-        }}
-      >
+          style={{
+            minHeight: "100vh",
+            width: "100%",
+            background: fadeIn
+              ? "linear-gradient(135deg, rgb(56, 58, 45) 60%, rgb(36, 44, 32) 100%)"
+              : "rgb(56, 58, 45)",
+            position: "relative",
+            transition: "background 0.8s cubic-bezier(.4,1.3,.6,1)",
+          }}
+        >
+        <div
+          className={`${montserrat.className} min-h-screen w-full relative px-6 pt-32 pb-10`}
+          style={{
+            background: "transparent",
+            opacity: fadeIn ? 1 : 0,
+            transition: "opacity 0.8s cubic-bezier(.4,1.3,.6,1)",
+          }}
+        >
         {fadeIn && (
           <style>{`
             body { background: linear-gradient(135deg, rgb(56, 58, 45) 60%, rgb(36, 44, 32) 100%) !important; }
@@ -532,10 +610,11 @@ export default function Dashboard() {
               <div style={{ width: "910px", height: "550px" }}>
                 <HeatMapCard startups={dashboardSeed.startups} />
               </div>
+              </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }

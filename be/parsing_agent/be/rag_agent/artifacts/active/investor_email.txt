@@ -1,14 +1,10 @@
-Subject: Resolution of Clause Updates - [Startup Name]
+Subject: Resolution of Reporting Clauses 001-005
 
 Email:
-Hello [Name],
+Dear [Contact Name],
 
-Following our review, we have accepted the tightened language for clauses 001 through 005. The inclusion of third-party assurance and specific data in your report has positively impacted our assessment, resulting in a trust score of 78.
-
-Specifically, we approve the revised frameworks for joint venture accounting, the 2026 REC phase-out timeline, and supply chain risk management. We also acknowledge the finalized targets for pay parity and investee data protocols.
-
-Please incorporate these rectified clauses into the final agreement for our signature.
+Our review of clauses 001-005 indicates a trust score of 35 due to excessive hedging and a lack of concrete timelines. To proceed, you must tighten the language to replace aspirational goals with firm commitments regarding net-zero dates and interim targets. We also require specific data collection milestones for Scope 3 emissions and mandatory requirements for supplier ESG audits. Please submit the rectified language for these clauses by [Date] for final approval.
 
 Best regards,
 
-[Your Name]
+[Investor Name]

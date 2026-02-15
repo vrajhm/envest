@@ -1,114 +1,114 @@
 {
-  "cached_at": "2026-02-15T06:35:51.557887Z",
+  "cached_at": "2026-02-15T10:18:32.502132Z",
   "payload": {
-    "overall_trust_score": 78,
-    "net_zero_credibility": 80,
+    "overall_trust_score": 35,
+    "net_zero_credibility": 20,
     "goal_scores": {
-      "carbon_reduction": 85,
-      "renewable_energy": 80,
-      "water_management": 60,
-      "waste_reduction": 65,
-      "social_responsibility": 75,
-      "governance": 80
+      "carbon_reduction": 30,
+      "renewable_energy": 40,
+      "water_management": 30,
+      "waste_reduction": 40,
+      "social_responsibility": 45,
+      "governance": 50
     },
     "risk_indicators": {
-      "greenwashing_signals": 25,
-      "commitment_specificity": 75,
-      "accountability_score": 70,
-      "baseline_quality": 85,
-      "timeline_clarity": 80
+      "greenwashing_signals": 60,
+      "commitment_specificity": 20,
+      "accountability_score": 30,
+      "baseline_quality": 50,
+      "timeline_clarity": 20
     },
     "per_goal_scores": [
       {
         "goal": "Carbon Reduction",
-        "score": 85,
-        "notes": "Strong targets and progress, but reliance on supplier data needs scrutiny."
+        "score": 30,
+        "notes": "Vague commitments, reliance on future technologies, no interim targets."
       },
       {
         "goal": "Renewable Energy",
-        "score": 80,
-        "notes": "Good progress, but unbundled RECs are a concern until phased out."
+        "score": 40,
+        "notes": "RECs are used, but additionality is not addressed. No clear targets."
       },
       {
         "goal": "Water Management",
-        "score": 60,
-        "notes": "No specific information provided."
+        "score": 30,
+        "notes": "Aims to enhance efficiency 'where practical' without specific targets."
       },
       {
         "goal": "Waste Reduction",
-        "score": 65,
-        "notes": "Only Scope 3 waste is mentioned, no details on internal waste."
+        "score": 40,
+        "notes": "Circular economy strategy is 'primarily aspirational'."
       },
       {
         "goal": "Social Responsibility",
-        "score": 75,
-        "notes": "Good DEI metrics, but more detail on human rights due diligence needed."
+        "score": 45,
+        "notes": "Acknowledges challenges in diversity and inclusion, but lacks concrete targets."
       },
       {
         "goal": "Governance",
-        "score": 80,
-        "notes": "Strong board independence and ESG linkage to compensation."
+        "score": 50,
+        "notes": "Ad-hoc ESG working group, not a formal standing committee."
       }
     ],
-    "syntax_notes": "The report uses clear language and provides detailed data, enhancing its credibility. The inclusion of third-party assurance is a positive sign.",
+    "syntax_notes": "The report uses hedging language and aspirational goals, lacking concrete commitments and timelines. There is a heavy reliance on future technologies and cost-benefit analyses to justify inaction.",
     "vulnerable_clauses": [
       {
-        "clause_text": "Joint ventures where we have <50% ownership are excluded from operational metrics but included in Scope 3 Category 15 (Investments).",
-        "vulnerability_score": 65,
-        "issue_type": "scope_gap",
-        "notes": "Excluding joint ventures below 50% ownership from operational metrics creates a potential loophole, as significant emissions could be attributed to these entities but not fully accounted for in direct operational performance. Including them only in Scope 3 Category 15 (Investments) may not provide sufficient transparency or accountability for their environmental impact.",
-        "similar_bad_examples": [
-          {
-            "example_clause": "Meta/Google's carbon neutral claims excluding Scope 3 supply chain emissions",
-            "source": "Meta/Google's carbon neutral claims"
-          }
-        ]
-      },
-      {
-        "clause_text": "Legacy unbundled RECs will be phased out by 2026 as additional PPAs are secured.",
-        "vulnerability_score": 55,
-        "issue_type": "timeline_issue",
-        "notes": "While phasing out unbundled RECs is positive, the timeline until 2026 allows for continued use of a less impactful renewable energy procurement method. The phrase 'as additional PPAs are secured' introduces conditionality, making the commitment less firm.",
+        "clause_text": "We support the goals of the Paris Agreement and aspire to achieve carbon neutrality by mid-century, contingent on the availability of cost-effective technologies, supportive regulatory frameworks, and alignment with our business strategy. We believe this timeframe provides sufficient flexibility to pursue decarbonization in a manner that preserves shareholder value and competitive positioning.",
+        "vulnerability_score": 85,
+        "issue_type": "loophole",
+        "notes": "Carbon neutrality is contingent on multiple external factors, providing significant loopholes. The long timeframe and focus on shareholder value weaken the commitment.",
         "similar_bad_examples": [
           {
             "example_clause": "Shell's 'major oil company' sustainability reports with vague 'net zero' goals",
-            "source": "Shell's sustainability reports"
+            "source": "Shell's Sustainability Reports"
           }
         ]
       },
       {
-        "clause_text": "Our supply chain represents 55% of our total carbon footprint and significant social/human rights risks. We maintain comprehensive supplier due diligence, mandatory Code of Conduct compliance, third-party audits, and capacity-building programs.",
-        "vulnerability_score": 45,
-        "issue_type": "vague_language",
-        "notes": "The language is broad and lacks specific details on the effectiveness of the due diligence, audit processes, and capacity-building programs. While the report mentions 'comprehensive' due diligence, it doesn't quantify the depth or frequency of these efforts, making it difficult to assess their actual impact.",
+        "clause_text": "While we have not yet established interim emissions reduction targets, we are committed to exploring opportunities to improve our carbon efficiency. Specific reduction pathways, baseline years, and milestone targets are under development and will be communicated when our analysis is complete. We anticipate announcing preliminary goals in the next 18-24 months, subject to Board approval and market conditions.",
+        "vulnerability_score": 75,
+        "issue_type": "timeline_issue",
+        "notes": "No interim targets are set, and the announcement of preliminary goals is subject to Board approval and market conditions, creating uncertainty.",
+        "similar_bad_examples": [
+          {
+            "example_clause": "\"We aim to...\" / \"We seek to...\" / \"Our goal is to...\" without concrete targets",
+            "source": "Common ESG Loopholes"
+          }
+        ]
+      },
+      {
+        "clause_text": "Scope 3 emissions are estimated using industry averages and spend-based calculations. Actual supplier emissions may vary significantly. We are working to improve data collection but recognize that comprehensive Scope 3 measurement may not be achievable in the near term due to data availability constraints and supplier engagement challenges.",
+        "vulnerability_score": 80,
+        "issue_type": "scope_gap",
+        "notes": "Scope 3 emissions are estimated and acknowledged to be uncertain, with no clear timeline for comprehensive measurement. This is a significant gap, as Scope 3 emissions are often the largest portion of a company's footprint.",
+        "similar_bad_examples": [
+          {
+            "example_clause": "Meta/Google's carbon neutral claims excluding Scope 3 supply chain emissions",
+            "source": "Meta/Google's Carbon Neutral Claims"
+          }
+        ]
+      },
+      {
+        "clause_text": "We aim to enhance water efficiency where practical, though specific reduction targets have not been established. Our approach prioritizes operational continuity while seeking opportunities for conservation that do not impact service delivery or employee comfort.",
+        "vulnerability_score": 70,
+        "issue_type": "weak_commitment",
+        "notes": "The commitment to water efficiency is weak, with no specific targets and prioritization of operational continuity and employee comfort.",
+        "similar_bad_examples": [
+          {
+            "example_clause": "\"We aim to...\" / \"We seek to...\" / \"Our goal is to...\" without concrete targets",
+            "source": "Common ESG Loopholes"
+          }
+        ]
+      },
+      {
+        "clause_text": "However, we do not currently require ESG certifications or conduct systematic supplier audits, as we believe such requirements could limit our sourcing flexibility and potentially increase costs. We engage with key suppliers on sustainability topics when opportunities arise and may formalize our expectations in the future.",
+        "vulnerability_score": 75,
+        "issue_type": "accountability_gap",
+        "notes": "Lack of supplier audits and ESG certifications creates a significant accountability gap in the supply chain. The commitment to 'formalize expectations in the future' is vague and non-committal.",
         "similar_bad_examples": [
           {
             "example_clause": "Shein's 'long-term sustainability goals' and 'social responsibility' pages with minimal transparency on supplier audits and overproduction",
-            "source": "Shein's sustainability claims"
-          }
-        ]
-      },
-      {
-        "clause_text": "Underrepresented minorities earn $0.99 for every $1.00 (within statistical margin, action plan for 100% parity)",
-        "vulnerability_score": 50,
-        "issue_type": "weak_commitment",
-        "notes": "While acknowledging the pay gap and stating an 'action plan,' the phrase 'within statistical margin' can be used to downplay the issue. The lack of specific details about the action plan and its timeline weakens the commitment to achieving full parity.",
-        "similar_bad_examples": [
-          {
-            "example_clause": "We aim to...",
-            "source": "Common Loopholes"
-          }
-        ]
-      },
-      {
-        "clause_text": "ESG criteria in portfolio",
-        "vulnerability_score": 70,
-        "issue_type": "vague_language",
-        "notes": "This is extremely vague. What ESG criteria are used? How are they weighted? What percentage of the portfolio is subject to these criteria? This lack of specificity makes it impossible to assess the impact or credibility of this claim.",
-        "similar_bad_examples": [
-          {
-            "example_clause": "Bank 'sustainable investing' funds (e.g., Active Super) that quietly hold fossil fuels, tobacco, and other excluded sectors while marketing as climate-aligned",
-            "source": "Bank 'sustainable investing' funds"
+            "source": "Shein's Sustainability Claims"
           }
         ]
       }
