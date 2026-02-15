@@ -1,6 +1,7 @@
 "use client";
 
 import "mapbox-gl/dist/mapbox-gl.css";
+import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
@@ -271,7 +272,18 @@ export default function HeatMapCard({ startups = [] }) {
         >
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 8 }}>
             <div>
-              <h3 style={{ margin: 0, fontSize: 16, lineHeight: 1.1, fontWeight: 700 }}>{selectedCompany.name}</h3>
+              <h3 style={{ margin: 0, fontSize: 16, lineHeight: 1.1, fontWeight: 700 }}>
+                <Link
+                  href={`/${encodeURIComponent(selectedCompany.name.toLowerCase())}`}
+                  style={{
+                    color: "#1a1c12",
+                    textDecoration: "underline",
+                    textUnderlineOffset: 2,
+                  }}
+                >
+                  {selectedCompany.name}
+                </Link>
+              </h3>
               <p style={{ margin: "4px 0 0", fontSize: 12, opacity: 0.85 }}>
                 {selectedCompany.sector} • {selectedCompany.city}
               </p>
