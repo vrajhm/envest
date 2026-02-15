@@ -1,5 +1,5 @@
 {
-  "cached_at": "2026-02-15T05:29:21.457815Z",
+  "cached_at": "2026-02-15T06:12:24.640635Z",
   "payload": {
     "overall_trust_score": 78,
     "net_zero_credibility": 80,
@@ -30,36 +30,36 @@
         "notes": "Good progress, but unbundled RECs are a concern until phased out."
       },
       {
-        "goal": "Water Management",
-        "score": 60,
-        "notes": "No specific water targets or metrics are provided in the excerpts."
-      },
-      {
-        "goal": "Waste Reduction",
-        "score": 65,
-        "notes": "Limited information on waste reduction efforts beyond Scope 3."
-      },
-      {
         "goal": "Social Responsibility",
         "score": 75,
-        "notes": "Good DEI data and pay equity, but more detail on human rights due diligence is needed."
+        "notes": "Good DEI metrics, but need more on human rights in supply chain."
       },
       {
         "goal": "Governance",
         "score": 80,
-        "notes": "Strong board independence and ESG linkage to executive pay."
+        "notes": "Strong board independence and ESG linkage to compensation."
+      },
+      {
+        "goal": "Water Management",
+        "score": 60,
+        "notes": "No specific information provided."
+      },
+      {
+        "goal": "Waste Reduction",
+        "score": 65,
+        "notes": "Zero waste program mentioned, but lacks detail."
       }
     ],
-    "syntax_notes": "The report uses clear language and provides detailed data, enhancing its credibility. The inclusion of third-party assurance is a positive sign.",
+    "syntax_notes": "The report uses clear language and provides specific data, enhancing its credibility. The inclusion of third-party assurance is a positive sign.",
     "vulnerable_clauses": [
       {
         "clause_text": "Joint ventures where we have <50% ownership are excluded from operational metrics but included in Scope 3 Category 15 (Investments).",
         "vulnerability_score": 65,
         "issue_type": "scope_gap",
-        "notes": "Excluding joint ventures below 50% ownership from operational metrics creates a potential loophole, as significant emissions could be attributed to these entities but not directly accounted for in the company's operational footprint. Including them only in Scope 3 Category 15 (Investments) may not provide sufficient transparency or accountability for their environmental impact.",
+        "notes": "Excluding joint ventures below 50% ownership from operational metrics creates a potential loophole, as significant emissions could be attributed to these entities but not fully accounted for in direct operational performance. Including them only in Scope 3 Category 15 (Investments) may not provide sufficient transparency or accountability for their environmental impact.",
         "similar_bad_examples": [
           {
-            "example_clause": "Our carbon neutral claims exclude Scope 3 supply chain emissions.",
+            "example_clause": "Meta/Google's carbon neutral claims excluding Scope 3 supply chain emissions",
             "source": "Meta/Google's carbon neutral claims"
           }
         ]
@@ -68,47 +68,47 @@
         "clause_text": "Legacy unbundled RECs will be phased out by 2026 as additional PPAs are secured.",
         "vulnerability_score": 55,
         "issue_type": "timeline_issue",
-        "notes": "While phasing out unbundled RECs is positive, the reliance on them until 2026 weakens the renewable energy claims. The phrase 'as additional PPAs are secured' introduces uncertainty, as there's no guarantee that sufficient PPAs will be secured by the deadline.",
+        "notes": "While phasing out unbundled RECs is positive, the reliance on 'additional PPAs being secured' introduces uncertainty. A firm commitment with specific timelines and alternative plans if PPAs are not secured would be stronger. The use of unbundled RECs, even temporarily, can be seen as a form of greenwashing if not clearly disclosed and justified.",
         "similar_bad_examples": [
           {
-            "example_clause": "We aim to achieve net zero by 2050.",
-            "source": "Shell's 'major oil company' sustainability reports"
+            "example_clause": "Apple's 2030 carbon neutral claims relying heavily on offset projects",
+            "source": "Apple's 2030 carbon neutral claims"
+          }
+        ]
+      },
+      {
+        "clause_text": "Our supply chain represents 55% of our total carbon footprint and significant social/human rights risks. We maintain comprehensive supplier due diligence, mandatory Code of Conduct compliance, third-party audits, and capacity-building programs.",
+        "vulnerability_score": 45,
+        "issue_type": "weak_commitment",
+        "notes": "While the statement acknowledges the risks and mentions due diligence efforts, it lacks specific, measurable targets for reducing social and human rights risks in the supply chain. The term 'comprehensive' is vague and needs quantification. The effectiveness of the 'capacity-building programs' is not clearly demonstrated.",
+        "similar_bad_examples": [
+          {
+            "example_clause": "Shein's 'long-term sustainability goals' and 'social responsibility' pages with minimal transparency on supplier audits and overproduction",
+            "source": "Shein's 'long-term sustainability goals'"
           }
         ]
       },
       {
         "clause_text": "Underrepresented minorities earn $0.99 for every $1.00 (within statistical margin, action plan for 100% parity)",
-        "vulnerability_score": 45,
-        "issue_type": "weak_commitment",
-        "notes": "While acknowledging the pay gap and stating an 'action plan,' the phrase 'within statistical margin' can be used to downplay the issue. The action plan should be clearly defined with specific steps and timelines to achieve 100% parity.",
-        "similar_bad_examples": [
-          {
-            "example_clause": "We aim to improve diversity in our workforce.",
-            "source": "Vague DEI statements common across industries"
-          }
-        ]
-      },
-      {
-        "clause_text": "Our supply chain represents 55% of our total carbon footprint and significant social/human rights risks.",
         "vulnerability_score": 40,
-        "issue_type": "vague_language",
-        "notes": "While acknowledging the risks, the phrase 'significant social/human rights risks' is vague. The report should specify the types of risks identified (e.g., forced labor, wage violations) and the specific regions or industries where these risks are most prevalent.",
+        "issue_type": "weak_commitment",
+        "notes": "While acknowledging the pay gap and stating an 'action plan', the phrase 'within statistical margin' can be used to downplay the issue. A more concrete commitment with specific actions and timelines for achieving 100% parity would be more credible.",
         "similar_bad_examples": [
           {
-            "example_clause": "We are committed to responsible sourcing.",
-            "source": "H&M's 'Conscious Collection' sustainability line"
+            "example_clause": "Companies touting 'diversity initiatives' without disclosing actual representation data or pay equity gaps",
+            "source": "General observation of corporate diversity reports"
           }
         ]
       },
       {
-        "clause_text": "100% corrective action plans",
-        "vulnerability_score": 50,
-        "issue_type": "weak_commitment",
-        "notes": "While stating that 100% of non-compliances have corrective action plans, it doesn't specify the effectiveness or completion rate of these plans. A more robust metric would be the percentage of corrective action plans that have been successfully implemented and verified.",
+        "clause_text": "Investee data",
+        "vulnerability_score": 70,
+        "issue_type": "accountability_gap",
+        "notes": "The 'Investee data' data quality description for Scope 3 Category 15 (Investments) is vague. It does not specify the source, methodology, or verification process for the data provided by investees. This lack of transparency makes it difficult to assess the reliability and accuracy of the reported emissions from investments.",
         "similar_bad_examples": [
           {
-            "example_clause": "We are committed to continuous improvement.",
-            "source": "Generic sustainability reports"
+            "example_clause": "Bank 'sustainable investing' funds (e.g., Active Super) that quietly hold fossil fuels, tobacco, and other excluded sectors while marketing as climate-aligned",
+            "source": "Bank 'sustainable investing' funds"
           }
         ]
       }

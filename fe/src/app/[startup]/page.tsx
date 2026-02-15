@@ -17,6 +17,8 @@ import {
   YAxis,
   Cell,
 } from "recharts";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import { dashboardStartups } from "@/lib/dashboardData";
 
 const montserrat = Montserrat({
@@ -512,13 +514,6 @@ export default function StartupDetail() {
     if (score <= 40) return "rgb(160, 130, 20)"; // darker yellow
     if (score <= 60) return "rgb(200, 80, 20)"; // darker orange
     return "rgb(140, 20, 20)"; // dark red for high risk
-  };
-
-  const getVulnerabilitySymbol = (score: number): string => {
-    if (score <= 20) return "✓";
-    if (score <= 40) return "⚠";
-    if (score <= 60) return "⚠⚠";
-    return "⛔";
   };
 
   const getSeverityLabel = (score: number): string => {
@@ -1532,9 +1527,40 @@ export default function StartupDetail() {
                               <div className="text-xs font-semibold mb-1 opacity-70">
                                 {msg.role === "user" ? "You" : "AI Assistant"}
                               </div>
-                              <div className="text-sm whitespace-pre-wrap">
-                                {msg.text}
-                              </div>
+                              {msg.role === "assistant" ? (
+                                <div className="text-sm">
+                                  <ReactMarkdown
+                                    remarkPlugins={[remarkGfm]}
+                                    components={{
+                                      p: ({ children }) => (
+                                        <p className="mb-2 last:mb-0">{children}</p>
+                                      ),
+                                      ul: ({ children }) => (
+                                        <ul className="list-disc pl-5 mb-2 last:mb-0">
+                                          {children}
+                                        </ul>
+                                      ),
+                                      ol: ({ children }) => (
+                                        <ol className="list-decimal pl-5 mb-2 last:mb-0">
+                                          {children}
+                                        </ol>
+                                      ),
+                                      li: ({ children }) => <li>{children}</li>,
+                                      code: ({ children }) => (
+                                        <code className="px-1 py-0.5 rounded bg-black/10">
+                                          {children}
+                                        </code>
+                                      ),
+                                    }}
+                                  >
+                                    {msg.text}
+                                  </ReactMarkdown>
+                                </div>
+                              ) : (
+                                <div className="text-sm whitespace-pre-wrap">
+                                  {msg.text}
+                                </div>
+                              )}
                             </div>
                           </div>
                         ))
@@ -1684,76 +1710,51 @@ export default function StartupDetail() {
                         )}
                       </div>
 
-                      {/* Clause List */}
-                      <div className="flex-1 overflow-y-auto space-y-2 mb-4">
-                        {scoreData &&
-                          getUnresolvedClauses().map((clause, idx) => {
-                            const originalIdx =
-                              scoreData.vulnerable_clauses.indexOf(clause);
-                            const isActive = idx === chatClauseIndex;
-                            return (
-                              <div
-                                key={originalIdx}
-                                onClick={() => {
-                                  setChatClauseIndex(idx);
-                                  setSelectedClause(clause);
-                                }}
-                                className={`p-3 rounded-lg cursor-pointer transition-all ${
-                                  isActive
-                                    ? "bg-white shadow-md"
-                                    : "bg-white/50 hover:bg-white/70"
-                                }`}
+                      {/* Current Clause Detail */}
+                      <div className="mb-4">
+                        {currentChatClause ? (
+                          <div
+                            className="p-3 rounded-lg"
+                            style={{
+                              background: "rgb(255, 250, 245)",
+                              borderLeft: `4px solid ${getVulnerabilityColor(currentChatClause.vulnerability_score)}`,
+                            }}
+                          >
+                            <div className="flex items-center justify-between gap-2 mb-2">
+                              <span
+                                className="text-xs font-semibold uppercase"
+                                style={{ color: "rgb(85, 81, 46)" }}
+                              >
+                                Current Clause
+                              </span>
+                              <span
+                                className="font-bold text-xs px-2 py-0.5 rounded"
                                 style={{
-                                  borderLeft: `4px solid ${isActive ? getVulnerabilityColor(clause.vulnerability_score) : "transparent"}`,
+                                  background: getVulnerabilityColor(
+                                    currentChatClause.vulnerability_score,
+                                  ),
+                                  color: "white",
                                 }}
                               >
-                                <div className="flex items-center justify-between mb-1">
-                                  <div className="flex items-center gap-1">
-                                    <span
-                                      style={{
-                                        color: getVulnerabilityColor(
-                                          clause.vulnerability_score,
-                                        ),
-                                      }}
-                                    >
-                                      {getVulnerabilitySymbol(
-                                        clause.vulnerability_score,
-                                      )}
-                                    </span>
-                                    <span
-                                      className="text-xs font-bold"
-                                      style={{
-                                        color: getVulnerabilityColor(
-                                          clause.vulnerability_score,
-                                        ),
-                                      }}
-                                    >
-                                      {clause.vulnerability_score}
-                                    </span>
-                                  </div>
-                                  <span
-                                    className="text-xs uppercase"
-                                    style={{ color: "rgb(85, 81, 46)" }}
-                                  >
-                                    {idx + 1}
-                                  </span>
-                                </div>
-                                <p
-                                  className="text-xs line-clamp-2"
-                                  style={{ color: "rgb(40, 40, 30)" }}
-                                >
-                                  {clause.clause_text}
-                                </p>
-                              </div>
-                            );
-                          })}
-                        {getUnresolvedClauses().length === 0 && (
+                                Score {currentChatClause.vulnerability_score}
+                              </span>
+                            </div>
+                            <p
+                              className="text-sm font-medium leading-relaxed line-clamp-5"
+                              style={{ color: "rgb(20, 20, 15)" }}
+                            >
+                              {currentChatClause.clause_text}
+                            </p>
+                          </div>
+                        ) : (
                           <div
-                            className="text-center py-8"
-                            style={{ color: "rgb(20, 100, 40)" }}
+                            className="text-center py-4 rounded-lg"
+                            style={{
+                              background: "rgb(255, 250, 245)",
+                              color: "rgb(20, 100, 40)",
+                            }}
                           >
-                            <div className="text-2xl mb-2">✓</div>
-                            <div className="font-bold">All Resolved!</div>
+                            <div className="font-bold">All clauses resolved</div>
                           </div>
                         )}
                       </div>
@@ -1775,7 +1776,7 @@ export default function StartupDetail() {
                           }}
                         >
                           <div className="font-bold text-sm">
-                            ✓ Resolve This Clause
+                            Resolve This Clause
                           </div>
                           <div className="text-xs opacity-80">
                             Move to next automatically
@@ -1816,45 +1817,6 @@ export default function StartupDetail() {
                           </div>
                         </button>
                       </div>
-
-                      {/* Current Clause Detail */}
-                      {currentChatClause && (
-                        <div
-                          className="mt-4 p-3 rounded-lg"
-                          style={{ background: "rgb(255, 250, 245)" }}
-                        >
-                          <div className="flex items-center gap-2 mb-2">
-                            <span
-                              style={{
-                                color: getVulnerabilityColor(
-                                  currentChatClause.vulnerability_score,
-                                ),
-                              }}
-                            >
-                              {getVulnerabilitySymbol(
-                                currentChatClause.vulnerability_score,
-                              )}
-                            </span>
-                            <span
-                              className="font-bold text-sm px-2 py-0.5 rounded"
-                              style={{
-                                background: getVulnerabilityColor(
-                                  currentChatClause.vulnerability_score,
-                                ),
-                                color: "white",
-                              }}
-                            >
-                              {currentChatClause.vulnerability_score}
-                            </span>
-                          </div>
-                          <p
-                            className="text-sm font-medium leading-relaxed"
-                            style={{ color: "rgb(20, 20, 15)" }}
-                          >
-                            {currentChatClause.clause_text}
-                          </p>
-                        </div>
-                      )}
 
                       {/* Status */}
                       <div
@@ -1927,6 +1889,7 @@ export default function StartupDetail() {
                     <button
                       onClick={() => {
                         setEmailModalOpen(false);
+                        setChatOpen(false);
                         setChatMessages((prev) => [
                           ...prev,
                           {
