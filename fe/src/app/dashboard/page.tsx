@@ -132,7 +132,9 @@ export default function Dashboard() {
       style={{
         minHeight: "100vh",
         width: "100%",
-        background: "rgb(217, 205, 183)",
+        background: fadeIn
+          ? "linear-gradient(135deg, rgb(56, 58, 45) 60%, rgb(36, 44, 32) 100%)"
+          : "rgb(56, 58, 45)",
         position: "relative",
         transition: "background 0.8s cubic-bezier(.4,1.3,.6,1)",
       }}
@@ -140,8 +142,7 @@ export default function Dashboard() {
       <div
         className={`${montserrat.className} min-h-screen w-full relative px-6 pt-32 pb-10`}
         style={{
-          background:
-            "linear-gradient(135deg, rgb(56, 58, 45) 60%, rgb(36, 44, 32) 100%)",
+          background: "transparent",
           opacity: fadeIn ? 1 : 0,
           transition: "opacity 0.8s cubic-bezier(.4,1.3,.6,1)",
         }}
@@ -283,10 +284,7 @@ export default function Dashboard() {
                 className="font-bold tracking-tight text-3xl"
                 style={{ lineHeight: "0.9" }}
               >
-                <span>
-                  AVERAGE CLIMATE SCORE:{" "}
-                  
-                </span>
+                <span>AVERAGE CLIMATE SCORE </span>
               </div>
               <div
                 className="text-lg font-normal mt-1 tracking-tight"
@@ -294,9 +292,7 @@ export default function Dashboard() {
               >
                 OVERALL SUSTAINABILITY TRUST RATING OF YOUR PORTFOLIO
               </div>
-              <div>
-                {portfolioMetrics.average_climate_score}
-              </div>
+              <div>{portfolioMetrics.average_climate_score}</div>
             </div>
 
             {/* Card 2 */}
@@ -308,9 +304,7 @@ export default function Dashboard() {
                 className="font-bold tracking-tight text-3xl"
                 style={{ lineHeight: "0.9" }}
               >
-                <span>
-                  HIGH RISK STARTUPS: 
-                </span>
+                <span>HIGH RISK STARTUPS</span>
               </div>
               <div
                 className="text-lg font-normal mt-1 tracking-tight"
@@ -318,9 +312,7 @@ export default function Dashboard() {
               >
                 HOLDINGS FLAGGED AS HIGH-RISK FOR GREENWASHING
               </div>
-              <div>
-                {portfolioMetrics.high_risk_startups}
-              </div>
+              <div>{portfolioMetrics.high_risk_startups}</div>
             </div>
 
             {/* Card 3 */}
@@ -332,9 +324,7 @@ export default function Dashboard() {
                 className="font-bold tracking-tight text-3xl"
                 style={{ lineHeight: "0.9" }}
               >
-                <span>
-                  AGGREGATE GREENWASHING RISK: 
-                </span>
+                <span>AGGREGATE GREENWASHING RISK</span>
               </div>
               <div
                 className="text-lg font-normal mt-1 tracking-tight"
@@ -342,9 +332,7 @@ export default function Dashboard() {
               >
                 COMBINED GREENWASHING PROBABILITY ACROSS YOUR PORTFOLIO
               </div>
-              <div>
-                {portfolioMetrics.aggregate_greenwashing_risk}
-              </div>
+              <div>{portfolioMetrics.aggregate_greenwashing_risk}</div>
             </div>
 
             {/* Card 4 */}
@@ -356,9 +344,7 @@ export default function Dashboard() {
                 className="font-bold tracking-tight text-3xl"
                 style={{ lineHeight: "0.9" }}
               >
-                <span>
-                  CLIMATE-ADJUSTED RETURN INDEX: 
-                </span>
+                <span>CLIMATE-ADJUSTED RETURN INDEX</span>
               </div>
               <div
                 className="text-lg font-normal mt-1 tracking-tight"
@@ -366,9 +352,7 @@ export default function Dashboard() {
               >
                 RISK-ADJUSTED RETURNS FACTORING CLIMATE AUTHENTICITY
               </div>
-              <div>
-                {portfolioMetrics.climate_adjusted_return_index}
-              </div>
+              <div>{portfolioMetrics.climate_adjusted_return_index}</div>
             </div>
           </div>
 
