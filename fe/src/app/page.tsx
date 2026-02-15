@@ -37,6 +37,17 @@ export default function Home() {
         transition: "background 0.7s cubic-bezier(.4,1.3,.6,1)",
       }}
     >
+      <style>{`
+        @keyframes textPulse {
+          0%, 100% {
+            transform: scale(1);
+          }
+          50% {
+            transform: scale(1.05);
+          }
+        }
+      `}</style>
+
       {/* HERO SECTION */}
       <div
         className="min-h-screen w-full relative flex items-center justify-center"
@@ -93,7 +104,7 @@ export default function Home() {
         {/* Vertical gradient mask from green to transparent */}
         <div
           style={{
-            position: "absolute", // Changed from "fixed" to "absolute"
+            position: "absolute",
             inset: -20,
             zIndex: 2,
             pointerEvents: "none",
@@ -113,7 +124,7 @@ export default function Home() {
               border: "none",
               padding: 0,
               cursor: "pointer",
-              animation: "pulse 4s ease-in-out infinite 1.2s",
+              animation: "textPulse 4s ease-in-out infinite 1.2s",
             }}
           >
             <span
