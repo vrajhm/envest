@@ -33,7 +33,8 @@ const sairaExtraCondensed = Saira_Extra_Condensed({
 
 export default function Dashboard() {
   const [fadeIn, setFadeIn] = useState(false);
-  const [startups, setStartups] = useState<DashboardStartupRow[]>(dashboardStartups);
+  const [startups, setStartups] =
+    useState<DashboardStartupRow[]>(dashboardStartups);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [startupNameInput, setStartupNameInput] = useState("");
   const [startupSectorInput, setStartupSectorInput] = useState("");
@@ -254,7 +255,9 @@ export default function Dashboard() {
                     className={`${montserrat.className} h-10 border border-[rgb(85,81,46)] bg-[rgb(237,243,189)] px-3 text-[rgb(26,28,18)] outline-none`}
                   />
                   {addStartupError && (
-                    <div className={`${montserrat.className} text-sm text-red-800`}>
+                    <div
+                      className={`${montserrat.className} text-sm text-red-800`}
+                    >
                       {addStartupError}
                     </div>
                   )}

@@ -65,3 +65,5 @@ be/rag_agent/run_demo_flow.sh
 # Local generated artifacts
 be/artifacts/
 be/rag_agent/artifacts/
+
+be/parsing_agent/cache/latest_score.json
