@@ -155,12 +155,25 @@ export default function StartupDetail() {
   const [chatClauseIndex, setChatClauseIndex] = useState<number>(0);
 
   const [fadeIn, setFadeIn] = useState(false);
+  // Controls when the analysis box appears
+  const [showAnalysisBox, setShowAnalysisBox] = useState(false);
 
   const RAG_API_BASE = "http://localhost:8000";
 
   useEffect(() => {
     setTimeout(() => setFadeIn(true), 200);
   }, []);
+
+  // Delay showing the analysis box after dropbox disables
+  useEffect(() => {
+    if (phase === "parsing" || phase === "analyzing") {
+      setShowAnalysisBox(false);
+      const timeout = setTimeout(() => setShowAnalysisBox(true), 600); // 600ms delay
+      return () => clearTimeout(timeout);
+    } else if (phase === "complete" || phase === "idle") {
+      setShowAnalysisBox(false);
+    }
+  }, [phase]);
 
   const getUnresolvedClauses = () => {
     if (!scoreData) return [];
@@ -358,13 +371,57 @@ export default function StartupDetail() {
     }
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
     if (selectedFile) {
       setFile(selectedFile);
       setStatusMessage("");
       setScoreData(null);
       setSelectedClause(null);
+      setUploading(true);
+      setPhase("parsing");
+      setStatusMessage("Parsing document...");
+      try {
+        const formData = new FormData();
+        formData.append("file", selectedFile);
+        const parseRes = await fetch(`${API_BASE}/parse`, {
+          method: "POST",
+          body: formData,
+        });
+        if (!parseRes.ok) {
+          const errorText = await parseRes.text();
+          throw new Error(errorText);
+        }
+        setPhase("analyzing");
+        setStatusMessage("Analyzing ESG claims...");
+        const scoreRes = await fetch(`${API_BASE}/score`);
+        if (!scoreRes.ok) {
+          const errorText = await scoreRes.text();
+          throw new Error(errorText);
+        }
+        const data: ScoreData = await scoreRes.json();
+        setScoreData(data);
+        if (data.vulnerable_clauses.length > 0) {
+          setSelectedClause(data.vulnerable_clauses[0]);
+        }
+        setStatusMessage("Syncing with AI assistant...");
+        try {
+          await fetch(`${API_BASE}/ingest`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ use_cache_on_score_failure: false }),
+          });
+        } catch {}
+        setPhase("complete");
+        setStatusMessage("Analysis complete!");
+      } catch (err) {
+        setPhase("idle");
+        setStatusMessage(
+          `Error: ${err instanceof Error ? err.message : "Upload failed"}`,
+        );
+      } finally {
+        setUploading(false);
+      }
     }
   };
 
@@ -553,8 +610,8 @@ export default function StartupDetail() {
             {startupFromJson?.name || startup?.name || "Startup"}
           </div>
 
-          {/* Analysis Phase Indicator */}
-          {phase !== "idle" && (
+          {/* Analysis Phase Indicator with delay */}
+          {showAnalysisBox && phase !== "idle" && (
             <div
               className={`mb-10 p-4 ${sairaExtraCondensed.className}`}
               style={{
@@ -565,7 +622,7 @@ export default function StartupDetail() {
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  {phase === "parsing" && (
+                  {(phase === "parsing" || phase === "analyzing") && (
                     <>
                       <div className="relative">
                         <div
@@ -573,37 +630,26 @@ export default function StartupDetail() {
                             width: 16,
                             height: 16,
                             borderRadius: "50%",
-                            border: "2px solid rgb(20, 54, 17)",
-                            borderTopColor: "transparent",
-                            animation: "spin 1s linear infinite",
+                            border:
+                              phase === "parsing"
+                                ? "2px solid rgb(20, 54, 17)"
+                                : undefined,
+                            borderTopColor:
+                              phase === "parsing" ? "transparent" : undefined,
+                            background:
+                              phase === "analyzing"
+                                ? "rgb(20, 54, 17)"
+                                : undefined,
+                            animation:
+                              phase === "parsing"
+                                ? "spin 1s linear infinite"
+                                : "pulse 1s ease-in-out infinite",
                           }}
                         />
                         <style>{`
                           @keyframes spin {
                             to { transform: rotate(360deg); }
                           }
-                        `}</style>
-                      </div>
-                      <span
-                        style={{ color: "rgb(26, 28, 18)", fontSize: "1.1rem" }}
-                      >
-                        Parsing document...
-                      </span>
-                    </>
-                  )}
-                  {phase === "analyzing" && (
-                    <>
-                      <div className="relative">
-                        <div
-                          style={{
-                            width: 16,
-                            height: 16,
-                            borderRadius: "50%",
-                            background: "rgb(20, 54, 17)",
-                            animation: "pulse 1s ease-in-out infinite",
-                          }}
-                        />
-                        <style>{`
                           @keyframes pulse {
                             0%, 100% { opacity: 1; transform: scale(1); }
                             50% { opacity: 0.5; transform: scale(0.8); }
@@ -613,20 +659,22 @@ export default function StartupDetail() {
                       <span
                         style={{ color: "rgb(26, 28, 18)", fontSize: "1.1rem" }}
                       >
-                        Analyzing ESG claims & detecting vulnerabilities...
+                        {statusMessage || "Analyzing ESG report..."}
                       </span>
-                      <div
-                        style={{
-                          position: "absolute",
-                          left: 0,
-                          right: 0,
-                          top: "50%",
-                          height: 2,
-                          background:
-                            "linear-gradient(90deg, transparent, rgb(20, 54, 17), transparent)",
-                          animation: "scan 2s ease-in-out infinite",
-                        }}
-                      />
+                      {phase === "analyzing" && (
+                        <div
+                          style={{
+                            position: "absolute",
+                            left: 0,
+                            right: 0,
+                            top: "50%",
+                            height: 2,
+                            background:
+                              "linear-gradient(90deg, transparent, rgb(20, 54, 17), transparent)",
+                            animation: "scan 2s ease-in-out infinite",
+                          }}
+                        />
+                      )}
                       <style>{`
                         @keyframes scan {
                           0%, 100% { transform: translateX(-100%); }
@@ -773,34 +821,9 @@ export default function StartupDetail() {
                 </span>
               )}
 
-              {file && (
-                <button
-                  onClick={handleUpload}
-                  disabled={uploading}
-                  className="rounded-md px-4 py-2 text-sm font-semibold ml-3"
-                  style={{
-                    background: uploading
-                      ? "rgb(85, 81, 46)"
-                      : "rgb(20, 54, 17)",
-                    color: "rgb(237, 243, 189)",
-                  }}
-                >
-                  {uploading ? "Processing..." : "Upload & Analyze"}
-                </button>
-              )}
+              {/* Upload & Analyze button removed; analysis now starts automatically after file upload */}
 
-              {statusMessage && (
-                <div
-                  className="mt-4 text-sm"
-                  style={{
-                    color: statusMessage.startsWith("Error")
-                      ? "rgb(180, 50, 50)"
-                      : "rgb(26, 54, 17)",
-                  }}
-                >
-                  {statusMessage}
-                </div>
-              )}
+              {/* Status message removed from dropbox; now only appears in the analysis box above */}
             </div>
           </div>
 
@@ -815,8 +838,8 @@ export default function StartupDetail() {
                   style={{ color: "rgb(26, 28, 18)" }}
                 >
                   <div
-                    className="font-bold text-xl"
-                    style={{ lineHeight: "0.9" }}
+                    className="font-bold text-4xl"
+                    style={{ lineHeight: "0.9", letterSpacing: "-0.03em" }}
                   >
                     CLIMATE TRUST
                   </div>
@@ -837,8 +860,8 @@ export default function StartupDetail() {
                   style={{ color: "rgb(26, 28, 18)" }}
                 >
                   <div
-                    className="font-bold text-xl"
-                    style={{ lineHeight: "0.9" }}
+                    className="font-bold text-4xl"
+                    style={{ lineHeight: "0.9", letterSpacing: "-0.03em" }}
                   >
                     GREENWASH RISK
                   </div>
@@ -864,8 +887,8 @@ export default function StartupDetail() {
                 style={{ color: "rgb(26, 28, 18)", marginBottom: "1.5rem" }}
               >
                 <div
-                  className="font-bold text-xl mb-2"
-                  style={{ lineHeight: "0.9" }}
+                  className="font-bold text-4xl mb-2"
+                  style={{ lineHeight: "0.9", letterSpacing: "-0.03em" }}
                 >
                   ESG GOAL BREAKDOWN
                 </div>
@@ -948,8 +971,8 @@ export default function StartupDetail() {
                   style={{ color: "rgb(26, 28, 18)" }}
                 >
                   <div
-                    className="font-bold text-xl mb-3"
-                    style={{ lineHeight: "0.9" }}
+                    className="font-bold text-4xl mb-3"
+                    style={{ lineHeight: "0.9", letterSpacing: "-0.03em" }}
                   >
                     ANALYSIS SUMMARY
                   </div>
@@ -971,8 +994,8 @@ export default function StartupDetail() {
                 style={{ color: "rgb(26, 28, 18)", marginBottom: "1.5rem" }}
               >
                 <div
-                  className="font-bold text-xl mb-2"
-                  style={{ lineHeight: "0.9" }}
+                  className="font-bold text-4xl mb-2"
+                  style={{ lineHeight: "0.9", letterSpacing: "-0.03em" }}
                 >
                   RISK INDICATORS
                 </div>
@@ -1058,8 +1081,8 @@ export default function StartupDetail() {
                 style={{ color: "rgb(26, 28, 18)" }}
               >
                 <div
-                  className="font-bold text-xl mb-4"
-                  style={{ lineHeight: "0.9" }}
+                  className="font-bold text-4xl mb-4"
+                  style={{ lineHeight: "0.9", letterSpacing: "-0.03em" }}
                 >
                   VULNERABILITIES BY SEVERITY
                 </div>
@@ -1090,7 +1113,7 @@ export default function StartupDetail() {
                       .map((clause, idx) => (
                         <div
                           key={idx}
-                          className={`p-4 rounded-lg border-l-4 cursor-pointer transition-all ${
+                          className={`p-4 border-l-4 cursor-pointer transition-all ${
                             selectedClause === clause
                               ? "bg-white shadow-lg border-l-8"
                               : "bg-white/60 hover:bg-white/80"
@@ -1108,35 +1131,23 @@ export default function StartupDetail() {
                                 : "none",
                           }}
                         >
-                          <div className="flex items-center justify-between gap-2 mb-2">
-                            <div className="flex items-center gap-2">
-                              <span
-                                className="text-lg"
-                                style={{
-                                  color: getVulnerabilityColor(
-                                    clause.vulnerability_score,
-                                  ),
-                                }}
-                              >
-                                {getVulnerabilitySymbol(
+                          <div className="flex items-center justify-between gap-2 mb-0">
+                            <span
+                              className="font-bold uppercase px-0 py-1 rounded"
+                              style={{
+                                fontSize: "1.5rem",
+                                background: `${getVulnerabilityColor(clause.vulnerability_score)}20`,
+                                color: getVulnerabilityColor(
                                   clause.vulnerability_score,
-                                )}
-                              </span>
-                              <span
-                                className="text-xs font-bold uppercase px-2 py-1 rounded"
-                                style={{
-                                  background: `${getVulnerabilityColor(clause.vulnerability_score)}20`,
-                                  color: getVulnerabilityColor(
-                                    clause.vulnerability_score,
-                                  ),
-                                }}
-                              >
-                                {getSeverityLabel(clause.vulnerability_score)}
-                              </span>
-                            </div>
+                                ),
+                              }}
+                            >
+                              {getSeverityLabel(clause.vulnerability_score)}
+                            </span>
                             <span
                               className="text-xs font-bold"
                               style={{
+                                fontSize: "1.5rem",
                                 color: getVulnerabilityColor(
                                   clause.vulnerability_score,
                                 ),
@@ -1147,7 +1158,10 @@ export default function StartupDetail() {
                           </div>
                           <p
                             className="text-sm line-clamp-2 font-medium"
-                            style={{ color: "rgb(30, 30, 20)" }}
+                            style={{
+                              color: "rgb(30, 30, 20)",
+                              letterSpacing: "-0.02em",
+                            }}
                           >
                             {clause.clause_text}
                           </p>
@@ -1155,6 +1169,7 @@ export default function StartupDetail() {
                             <div
                               className="h-full rounded-full transition-all duration-500"
                               style={{
+                                letterSpacing: "-0.25rem",
                                 width: `${clause.vulnerability_score}%`,
                                 background: getVulnerabilityColor(
                                   clause.vulnerability_score,
@@ -1178,8 +1193,8 @@ export default function StartupDetail() {
                   style={{ color: "rgb(26, 28, 18)" }}
                 >
                   <div
-                    className="font-bold text-xl"
-                    style={{ lineHeight: "0.9" }}
+                    className="font-bold text-4xl"
+                    style={{ lineHeight: "0.9", letterSpacing: "-0.03em" }}
                   >
                     NET-ZERO CRED
                   </div>
@@ -1203,10 +1218,10 @@ export default function StartupDetail() {
                   style={{ color: "rgb(26, 28, 18)" }}
                 >
                   <div
-                    className="font-bold text-xl"
-                    style={{ lineHeight: "0.9" }}
+                    className="font-bold text-4xl"
+                    style={{ lineHeight: "0.9", letterSpacing: "-0.03em" }}
                   >
-                    VULNERABLE
+                    VULNERABLE CLAUSES
                   </div>
                   <div
                     className="text-4xl font-bold mt-3"
@@ -1227,8 +1242,8 @@ export default function StartupDetail() {
                 }}
               >
                 <div
-                  className="font-bold text-xl mb-4"
-                  style={{ lineHeight: "0.9" }}
+                  className="font-bold text-4xl mb-4"
+                  style={{ lineHeight: "0.9", letterSpacing: "-0.03em" }}
                 >
                   CLAUSE DETAIL
                 </div>
@@ -1242,20 +1257,8 @@ export default function StartupDetail() {
                   </div>
                 ) : (
                   <div className="space-y-5">
-                    {/* Vulnerability Badge */}
+                    {/* Vulnerability Badge (symbol removed) */}
                     <div className="flex items-center gap-3">
-                      <span
-                        className="text-2xl"
-                        style={{
-                          color: getVulnerabilityColor(
-                            selectedClause.vulnerability_score,
-                          ),
-                        }}
-                      >
-                        {getVulnerabilitySymbol(
-                          selectedClause.vulnerability_score,
-                        )}
-                      </span>
                       <div
                         className="px-3 py-2 rounded-lg font-bold"
                         style={{
@@ -1274,12 +1277,12 @@ export default function StartupDetail() {
                     <div>
                       <div
                         className="text-xs font-bold mb-2 uppercase"
-                        style={{ color: "rgb(85, 81, 46)" }}
+                        style={{ color: "rgb(85, 81, 46)", fontSize: "1.5rem" }}
                       >
                         Vulnerable Text
                       </div>
                       <div
-                        className="p-4 rounded-lg"
+                        className="p-4"
                         style={{
                           background: "rgb(255, 250, 245)",
                           borderLeft: `4px solid ${getVulnerabilityColor(selectedClause.vulnerability_score)}`,
@@ -1287,7 +1290,7 @@ export default function StartupDetail() {
                       >
                         <p
                           className="text-base font-medium leading-relaxed"
-                          style={{ color: "rgb(20, 20, 15)" }}
+                          style={{ color: "rgb(85, 81, 46)" }}
                         >
                           {selectedClause.clause_text}
                         </p>
@@ -1295,15 +1298,17 @@ export default function StartupDetail() {
                     </div>
 
                     {selectedClause.notes && (
-                      <div>
-                        <div
-                          className="text-xs font-bold mb-2 uppercase"
-                          style={{ color: "rgb(85, 81, 46)" }}
-                        >
-                          Analysis
-                        </div>
+                      <div
+                        className="text-xs font-bold mb-2 "
+                        style={{
+                          borderRadius: 0,
+                          fontSize: "1.5rem",
+                          color: "rgb(85, 81, 46)",
+                        }}
+                      >
+                        ANALYSIS
                         <p
-                          className="text-sm leading-relaxed"
+                          className="text-base font-medium leading-relaxed"
                           style={{ color: "rgb(50, 50, 40)" }}
                         >
                           {selectedClause.notes}
@@ -1314,15 +1319,18 @@ export default function StartupDetail() {
                       <div>
                         <div
                           className="text-xs font-bold mb-2 uppercase"
-                          style={{ color: "rgb(180, 60, 40)" }}
+                          style={{
+                            color: "rgb(180, 60, 40)",
+                            fontSize: "1.5rem",
+                          }}
                         >
-                          ⚠️ Known Similar Cases
+                          Known Similar Cases
                         </div>
                         <div className="space-y-2">
                           {selectedClause.similar_bad_examples.map((ex, i) => (
                             <div
                               key={i}
-                              className="p-3 rounded"
+                              className="p-3"
                               style={{
                                 background: "rgb(255, 245, 240)",
                                 borderLeft: "3px solid rgb(180, 60, 40)",
