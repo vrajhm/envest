@@ -33,6 +33,7 @@ const sairaExtraCondensed = Saira_Extra_Condensed({
 
 export default function Dashboard() {
   const [fadeIn, setFadeIn] = useState(false);
+  const [logoOpacity, setLogoOpacity] = useState(1);
   const [startups, setStartups] = useState<DashboardStartupRow[]>(dashboardStartups);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [startupNameInput, setStartupNameInput] = useState("");
@@ -44,6 +45,18 @@ export default function Dashboard() {
 
   useEffect(() => {
     setFadeIn(true);
+  }, []);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const fadeDistance = 90;
+      const nextOpacity = Math.max(0, 1 - window.scrollY / fadeDistance);
+      setLogoOpacity(nextOpacity);
+    };
+
+    handleScroll();
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   const portfolioMetrics = dashboardSeed.portfolio_metrics;
@@ -169,6 +182,11 @@ export default function Dashboard() {
             userSelect: "none",
             textDecoration: "none",
             transition: "transform 0.18s cubic-bezier(.4,1.3,.6,1)",
+            opacity: logoOpacity,
+            background: "radial-gradient(circle, rgb(56, 58, 45) 45%, rgba(56, 58, 45, 0.55) 70%, rgba(56, 58, 45, 0) 100%)",
+            borderRadius: "9999px",
+            padding: "0.35rem 0.9rem",
+            boxShadow: "0 0 28px 12px rgba(56, 58, 45, 0.85)",
           }}
           onMouseEnter={(e) =>
             (e.currentTarget.style.transform = "scale(1.13)")
