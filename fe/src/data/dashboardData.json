@@ -1,0 +1,134 @@
+{
+  "version": "1.0",
+  "updated_at": "2026-02-15T00:00:00Z",
+  "investor_profile": {
+    "investor_id": "inv_demo_001",
+    "name": "Bay Climate Fund",
+    "check_size_usd": 2500000,
+    "climate_concerns": [
+      "Carbon reduction",
+      "Scope 3 transparency",
+      "Offset quality",
+      "Supply-chain accountability"
+    ],
+    "location": "San Francisco, CA"
+  },
+  "portfolio_metrics": {
+    "average_climate_score": 72.7,
+    "high_risk_startups": 2,
+    "aggregate_greenwashing_risk": 36.9,
+    "climate_adjusted_return_index": 68.9
+  },
+  "startups": [
+    {
+      "startup_id": "st_001",
+      "name": "EcoGen Grid",
+      "sector": "Energy",
+      "climate_trust": 82,
+      "greenwash_risk": 18,
+      "net_zero_cred": 84,
+      "confidence": 91,
+      "status": "healthy",
+      "geo": { "city": "San Francisco", "lat": 37.7749, "lng": -122.4194 }
+    },
+    {
+      "startup_id": "st_002",
+      "name": "BlueLoop Carbon",
+      "sector": "Carbon Tech",
+      "climate_trust": 74,
+      "greenwash_risk": 32,
+      "net_zero_cred": 71,
+      "confidence": 86,
+      "status": "watch",
+      "geo": { "city": "San Francisco", "lat": 37.808, "lng": -122.4177 }
+    },
+    {
+      "startup_id": "st_003",
+      "name": "Verdant Freight AI",
+      "sector": "Logistics",
+      "climate_trust": 68,
+      "greenwash_risk": 41,
+      "net_zero_cred": 63,
+      "confidence": 80,
+      "status": "watch",
+      "geo": { "city": "San Francisco", "lat": 37.7599, "lng": -122.4148 }
+    },
+    {
+      "startup_id": "st_004",
+      "name": "OffsetBridge",
+      "sector": "Climate Finance",
+      "climate_trust": 59,
+      "greenwash_risk": 62,
+      "net_zero_cred": 54,
+      "confidence": 74,
+      "status": "high_risk",
+      "geo": { "city": "San Francisco", "lat": 37.7347, "lng": -122.3908 }
+    },
+    {
+      "startup_id": "st_005",
+      "name": "SunMesh Materials",
+      "sector": "Advanced Materials",
+      "climate_trust": 91,
+      "greenwash_risk": 12,
+      "net_zero_cred": 90,
+      "confidence": 95,
+      "status": "healthy",
+      "geo": { "city": "San Francisco", "lat": 37.7802, "lng": -122.4826 }
+    },
+    {
+      "startup_id": "st_006",
+      "name": "AquaTrace Systems",
+      "sector": "Water Tech",
+      "climate_trust": 63,
+      "greenwash_risk": 55,
+      "net_zero_cred": 58,
+      "confidence": 77,
+      "status": "watch",
+      "geo": { "city": "San Francisco", "lat": 37.7284, "lng": -122.4292 }
+    },
+    {
+      "startup_id": "st_007",
+      "name": "TerraStack Compute",
+      "sector": "Data Infrastructure",
+      "climate_trust": 77,
+      "greenwash_risk": 28,
+      "net_zero_cred": 75,
+      "confidence": 88,
+      "status": "healthy",
+      "geo": { "city": "San Francisco", "lat": 37.7993, "lng": -122.447 }
+    },
+    {
+      "startup_id": "st_008",
+      "name": "GreenLabel Retail",
+      "sector": "Consumer",
+      "climate_trust": 54,
+      "greenwash_risk": 67,
+      "net_zero_cred": 49,
+      "confidence": 70,
+      "status": "high_risk",
+      "geo": { "city": "San Francisco", "lat": 37.7562, "lng": -122.3872 }
+    },
+    {
+      "startup_id": "st_009",
+      "name": "CycleForge Bio",
+      "sector": "Circular Economy",
+      "climate_trust": 88,
+      "greenwash_risk": 15,
+      "net_zero_cred": 86,
+      "confidence": 93,
+      "status": "healthy",
+      "geo": { "city": "San Francisco", "lat": 37.7896, "lng": -122.4662 }
+    },
+    {
+      "startup_id": "st_010",
+      "name": "NorthBay Transit Ops",
+      "sector": "Mobility",
+      "climate_trust": 71,
+      "greenwash_risk": 39,
+      "net_zero_cred": 69,
+      "confidence": 84,
+      "status": "watch",
+      "geo": { "city": "San Francisco", "lat": 37.7489, "lng": -122.458 }
+    }
+  ]
+}

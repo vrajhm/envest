@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Smooch_Sans, Montserrat } from "next/font/google";
 import { Saira_Extra_Condensed } from "next/font/google";
 import { useEffect, useState } from "react";
+import { dashboardSeed, dashboardStartups } from "@/lib/dashboardData";
 
 const montserrat = Montserrat({
   subsets: ["latin"],
@@ -24,44 +25,8 @@ export default function Dashboard() {
     setFadeIn(true);
   }, []);
 
-  const startups = [
-    {
-      name: "EcoGen",
-      sector: "Energy",
-      climateTrust: 92,
-      greenwashRisk: 12,
-      netZeroCred: 100,
-      confidence: 87,
-      status: "Strong",
-    },
-    {
-      name: "GreenLeaf",
-      sector: "Agriculture",
-      climateTrust: 78,
-      greenwashRisk: 34,
-      netZeroCred: 65,
-      confidence: 54,
-      status: "Neutral",
-    },
-    {
-      name: "UrbanRoots",
-      sector: "Urban Farming",
-      climateTrust: 88,
-      greenwashRisk: 27,
-      netZeroCred: 90,
-      confidence: 73,
-      status: "Strong",
-    },
-    {
-      name: "BlueCycle",
-      sector: "Recycling",
-      climateTrust: 61,
-      greenwashRisk: 49,
-      netZeroCred: 72,
-      confidence: 58,
-      status: "Poor",
-    },
-  ];
+  const startups = dashboardStartups;
+  const portfolioMetrics = dashboardSeed.portfolio_metrics;
 
   const handleRowClick = (startupName: string) => {
     router.push(`/${startupName.toLowerCase()}`);
@@ -166,13 +131,19 @@ export default function Dashboard() {
                 className="font-bold tracking-tight text-3xl"
                 style={{ lineHeight: "0.9" }}
               >
-                <span>AVERAGE CLIMATE SCORE</span>
+                <span>
+                  AVERAGE CLIMATE SCORE:{" "}
+                  
+                </span>
               </div>
               <div
                 className="text-lg font-normal mt-1 tracking-tight"
                 style={{ color: "rgb(85, 81, 46)", lineHeight: "0.9" }}
               >
                 OVERALL SUSTAINABILITY TRUST RATING OF YOUR PORTFOLIO
+              </div>
+              <div>
+                {portfolioMetrics.average_climate_score}
               </div>
             </div>
 
@@ -185,13 +156,18 @@ export default function Dashboard() {
                 className="font-bold tracking-tight text-3xl"
                 style={{ lineHeight: "0.9" }}
               >
-                <span>HIGH RISK STARTUPS</span>
+                <span>
+                  HIGH RISK STARTUPS: 
+                </span>
               </div>
               <div
                 className="text-lg font-normal mt-1 tracking-tight"
                 style={{ color: "rgb(85, 81, 46)", lineHeight: "0.9" }}
               >
                 HOLDINGS FLAGGED AS HIGH-RISK FOR GREENWASHING
+              </div>
+              <div>
+                {portfolioMetrics.high_risk_startups}
               </div>
             </div>
 
@@ -204,13 +180,18 @@ export default function Dashboard() {
                 className="font-bold tracking-tight text-3xl"
                 style={{ lineHeight: "0.9" }}
               >
-                <span>AGGREGATE GREENWASHING RISK</span>
+                <span>
+                  AGGREGATE GREENWASHING RISK: 
+                </span>
               </div>
               <div
                 className="text-lg font-normal mt-1 tracking-tight"
                 style={{ color: "rgb(85, 81, 46)", lineHeight: "0.9" }}
               >
                 COMBINED GREENWASHING PROBABILITY ACROSS YOUR PORTFOLIO
+              </div>
+              <div>
+                {portfolioMetrics.aggregate_greenwashing_risk}
               </div>
             </div>
 
@@ -223,13 +204,18 @@ export default function Dashboard() {
                 className="font-bold tracking-tight text-3xl"
                 style={{ lineHeight: "0.9" }}
               >
-                <span>CLIMATE-ADJUSTED RETURN INDEX</span>
+                <span>
+                  CLIMATE-ADJUSTED RETURN INDEX: 
+                </span>
               </div>
               <div
                 className="text-lg font-normal mt-1 tracking-tight"
                 style={{ color: "rgb(85, 81, 46)", lineHeight: "0.9" }}
               >
                 RISK-ADJUSTED RETURNS FACTORING CLIMATE AUTHENTICITY
+              </div>
+              <div>
+                {portfolioMetrics.climate_adjusted_return_index}
               </div>
             </div>
           </div>
