@@ -1,78 +1,99 @@
 {
-  "cached_at": "2026-02-15T00:14:48.457803Z",
+  "cached_at": "2026-02-15T02:02:35.267118Z",
   "payload": {
-    "overall_trust_score": 48,
+    "overall_trust_score": 35,
+    "net_zero_credibility": 30,
+    "goal_scores": {
+      "carbon_reduction": 40,
+      "renewable_energy": 50,
+      "water_management": 0,
+      "waste_reduction": 0,
+      "social_responsibility": 0,
+      "governance": 0
+    },
+    "risk_indicators": {
+      "greenwashing_signals": 65,
+      "commitment_specificity": 40,
+      "accountability_score": 25,
+      "baseline_quality": 40,
+      "timeline_clarity": 50
+    },
     "per_goal_scores": [
       {
-        "goal": "Carbon Reduction",
+        "goal": "Net Zero by 2040",
+        "score": 30,
+        "notes": "Lacks interim targets and scope 3 inclusion."
+      },
+      {
+        "goal": "Reduce emissions intensity by 50% per unit of revenue (baseline year: 2022)",
+        "score": 45,
+        "notes": "Intensity target allows for absolute emissions growth."
+      },
+      {
+        "goal": "100% renewable electricity across global operations by 2028",
         "score": 50,
-        "notes": "Vague targets, heavy reliance on offsets, no clear interim goals."
-      },
-      {
-        "goal": "Public Health Impact",
-        "score": 40,
-        "notes": "Limited discussion, no specific metrics beyond safety incident rates."
-      },
-      {
-        "goal": "Climate Adaptation",
-        "score": 55,
-        "notes": "Early stages of risk assessment, no concrete adaptation strategies."
+        "notes": "Relies on RECs, PPAs, and on-site solar without specifying additionality or geographic matching."
       }
     ],
-    "syntax_notes": "Report uses aspirational language and lacks specific, measurable, time-bound targets. Disclaimers undermine commitments.",
+    "syntax_notes": "The report uses forward-looking language and lacks specific, measurable, and time-bound commitments. There is a heavy reliance on offsets and RECs without sufficient detail on their quality or impact.",
     "vulnerable_clauses": [
       {
-        "clause_text": "GreenTech Innovations is committed to playing our part in addressing climate change. We aspire to achieve net-zero emissions by 2050, subject to technological advancement, economic viability, and market conditions.",
-        "vulnerability_score": 75,
-        "notes": "Net-zero by 2050 with multiple escape clauses weakens the commitment.",
-        "similar_bad_examples": [
-          {
-            "example_clause": "Shell aims to achieve net-zero emissions by 2050, in step with society.",
-            "source": "Shell Sustainability Report 2021"
-          }
-        ]
-      },
-      {
-        "clause_text": "Our pathway to net-zero will involve a combination of emissions reductions, efficiency improvements, renewable energy adoption, and carbon offsetting strategies. Specific interim targets and timelines are under development and will be announced when our assessment is complete.",
-        "vulnerability_score": 80,
-        "notes": "Reliance on offsets and deferred interim targets raise concerns.",
-        "similar_bad_examples": [
-          {
-            "example_clause": "Amazon's Climate Pledge relies heavily on carbon offsets instead of actual emissions reductions.",
-            "source": "Amazon's Climate Pledge"
-          }
-        ]
-      },
-      {
-        "clause_text": "While we have not yet implemented mandatory supplier audits or certification requirements, we engage with key suppliers on ESG topics and expect them to align with our values where practical.",
+        "clause_text": "We are proud to announce our commitment to achieving **Net Zero emissions by 2040**, reinforcing our dedication to environmental leadership while delivering strong shareholder value.",
         "vulnerability_score": 70,
-        "notes": "Weak supplier engagement and lack of mandatory audits create supply chain risks.",
+        "issue_type": "weak_commitment",
+        "notes": "Lacks interim targets, scope 3 inclusion, and details on how net zero will be achieved.",
         "similar_bad_examples": [
           {
-            "example_clause": "Shein's \"long-term sustainability goals\" and \"social responsibility\" pages with minimal transparency on supplier audits",
-            "source": "Shein's Sustainability Pages"
+            "example_clause": "Shell's sustainability reports with vague 'net zero' goals",
+            "source": "Shell's sustainability reports"
           }
         ]
       },
       {
-        "clause_text": "We intend to explore opportunities for emissions reduction where technologically and economically feasible, recognizing that rapid growth may temporarily impact our environmental metrics. Our long-term vision includes transitioning to cleaner energy sources, subject to availability and cost considerations.",
+        "clause_text": "Reduce emissions intensity by 50% per unit of revenue (baseline year: 2022)",
+        "vulnerability_score": 75,
+        "issue_type": "loophole",
+        "notes": "Focusing on emissions intensity allows for absolute emissions to increase if production or revenue increases significantly.",
+        "similar_bad_examples": [
+          {
+            "example_clause": "Emphasis on carbon intensity per unit (per passenger-km, per product) while total absolute emissions continue to rise",
+            "source": "General observation of airline and manufacturing ESG reports"
+          }
+        ]
+      },
+      {
+        "clause_text": "GreenNova reports 92% renewable electricity usage across its global operations in 2025.",
         "vulnerability_score": 65,
-        "notes": "\"Intend to explore\" and \"subject to availability and cost\" provide loopholes.",
+        "issue_type": "offset_claims",
+        "notes": "Achieved through Renewable Energy Certificates (RECs), Power purchase agreements (PPAs), and On-site solar generation. The report does not specify the quality or additionality of RECs.",
         "similar_bad_examples": [
           {
-            "example_clause": "We aim to improve energy efficiency across our facilities through equipment upgrades and operational optimization where cost-effective",
-            "source": "Shell Sustainability Report 2021"
+            "example_clause": "Renewable energy claims using RECs without actual renewable procurement",
+            "source": "General observation of corporate renewable energy claims"
           }
         ]
       },
       {
-        "clause_text": "The goals, targets, and aspirations described in this report are not guarantees of future performance. Our ability to achieve these objectives depends on numerous factors beyond our control, including technological developments, market conditions, regulatory changes, and business priorities. Nothing in this report should be construed as a binding commitment.",
-        "vulnerability_score": 90,
-        "notes": "Broad disclaimer undermines the entire report's credibility.",
+        "clause_text": "Scope 3 emissions are currently being assessed and will be included in future reporting once data availability improves.",
+        "vulnerability_score": 80,
+        "issue_type": "scope_gap",
+        "notes": "Indefinitely deferring Scope 3 emissions reporting is a significant omission, especially for a materials company where supply chain emissions are likely substantial.",
         "similar_bad_examples": [
           {
-            "example_clause": "These statements are subject to risks, uncertainties, and assumptions that could cause actual results to differ materially.",
-            "source": "Various ESG reports"
+            "example_clause": "Scope 3 emissions under evaluation - indefinitely deferred",
+            "source": "Common loophole in corporate ESG reports"
+          }
+        ]
+      },
+      {
+        "clause_text": "Baseline emissions were recalculated in 2024 to reflect structural changes in the organization.",
+        "vulnerability_score": 70,
+        "issue_type": "baseline_quality",
+        "notes": "Recalculating the baseline without providing a clear explanation raises concerns about potential manipulation to show improved performance.",
+        "similar_bad_examples": [
+          {
+            "example_clause": "Baseline recalculated to make emissions appear lower",
+            "source": "Common loophole in corporate ESG reports"
           }
         ]
       }

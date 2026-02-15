@@ -380,6 +380,22 @@ Output only valid JSON with no other text. Use this exact structure:
 
 {
   "overall_trust_score": <number 0-100>,
+  "net_zero_credibility": <number 0-100>,
+  "goal_scores": {
+    "carbon_reduction": <number 0-100>,
+    "renewable_energy": <number 0-100>,
+    "water_management": <number 0-100>,
+    "waste_reduction": <number 0-100>,
+    "social_responsibility": <number 0-100>,
+    "governance": <number 0-100>
+  },
+  "risk_indicators": {
+    "greenwashing_signals": <number 0-100, how many red flags detected>,
+    "commitment_specificity": <number 0-100, how specific vs vague>,
+    "accountability_score": <number 0-100, how accountable>,
+    "baseline_quality": <number 0-100, quality of baselines used>,
+    "timeline_clarity": <number 0-100, clear timelines vs vague>
+  },
   "per_goal_scores": [
     { "goal": "<goal text>", "score": <0-100>, "notes": "<short note>" }
   ],
@@ -387,7 +403,8 @@ Output only valid JSON with no other text. Use this exact structure:
   "vulnerable_clauses": [
     {
       "clause_text": "<excerpt from the document>",
-      "vulnerability_score": <number 0-100, higher = more exploitable>,
+      "vulnerability_score": <number 0-100>,
+      "issue_type": "<one of: vague_language, loophole, weak_commitment, offset_claims, scope_gap, timeline_issue, accountability_gap>",
       "notes": "<optional short note>",
       "similar_bad_examples": [
         { "example_clause": "<clause from a known ESG report>", "source": "<e.g. Company X 2022 ESG report>" }
@@ -635,6 +652,38 @@ async def score_contract():
                     }
                 ]
             clause["similar_bad_examples"] = cleaned_examples
+            if "issue_type" not in clause or not isinstance(clause["issue_type"], str):
+                clause["issue_type"] = "weak_commitment"
+        
+        default_goal_scores = {
+            "carbon_reduction": 50,
+            "renewable_energy": 50,
+            "water_management": 50,
+            "waste_reduction": 50,
+            "social_responsibility": 50,
+            "governance": 50
+        }
+        if "goal_scores" not in result or not isinstance(result["goal_scores"], dict):
+            result["goal_scores"] = default_goal_scores
+        else:
+            for key in default_goal_scores:
+                if key not in result["goal_scores"]:
+                    result["goal_scores"][key] = 50
+        
+        default_risk_indicators = {
+            "greenwashing_signals": 50,
+            "commitment_specificity": 50,
+            "accountability_score": 50,
+            "baseline_quality": 50,
+            "timeline_clarity": 50
+        }
+        if "risk_indicators" not in result or not isinstance(result["risk_indicators"], dict):
+            result["risk_indicators"] = default_risk_indicators
+        else:
+            for key in default_risk_indicators:
+                if key not in result["risk_indicators"]:
+                    result["risk_indicators"][key] = 50
+        
         _write_score_cache(result)
         return result
     except json.JSONDecodeError as e:
