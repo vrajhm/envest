@@ -1,6 +1,6 @@
 import dashboardDataJson from "@/data/dashboardData.json";
 
-export type StartupStatus = "healthy" | "watch" | "high_risk";
+export type StartupStatus = "healthy" | "watch" | "high_risk" | "N/A";
 
 export type DashboardData = {
   version: string;
@@ -22,6 +22,7 @@ export type DashboardData = {
     startup_id: string;
     name: string;
     sector: string;
+    location?: string;
     climate_trust: number;
     greenwash_risk: number;
     net_zero_cred: number;
