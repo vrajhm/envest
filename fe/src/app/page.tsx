@@ -42,11 +42,27 @@ export default function Home() {
             cursor: "pointer",
             animation: "pulse 4s ease-in-out infinite 1.2s",
           }}
-          onClick={() => router.push("/dashboard")}
         >
           to dashboard (placeholder)
         </button>
       )}
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          zIndex: 1,
+          opacity: showBgImage ? 1 : 0,
+          transition: "opacity 0.9s ease",
+        }}
+      >
+        <Image
+          src="/background.png"
+          alt="Landing background"
+          fill
+          style={{ objectFit: "cover" }}
+          priority
+        />
+      </div>
       <span
         style={{
           position: "absolute",

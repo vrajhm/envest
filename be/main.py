@@ -9,7 +9,7 @@ from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from dotenv import load_dotenv
-from fastapi import FastAPI
+from fastapi import FastAPI, Response
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from pymongo import MongoClient
@@ -185,7 +185,9 @@ def fetch_open_meteo_sf_points():
 
 
 @app.get("/issues")
-def get_issues():
+def get_issues(response: Response):
+    response.headers["Cache-Control"] = "public, max-age=60"
+
     # Prefer real station points from OpenAQ when available, and fill coverage with
     # modeled SF PM2.5 points from Open-Meteo so the heatmap stays realistic.
     features = fetch_openaq_sf_points()

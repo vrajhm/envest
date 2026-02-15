@@ -3,6 +3,42 @@
 import { useEffect, useRef, useState } from "react";
 
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
+const ISSUES_URL = "http://localhost:8000/issues";
+const CACHE_TTL_MS = 60_000;
+
+let cachedIssues = null;
+let cacheExpiresAt = 0;
+let inflightIssuesRequest = null;
+
+async function getIssuesWithCache() {
+  const now = Date.now();
+
+  if (cachedIssues && now < cacheExpiresAt) {
+    return cachedIssues;
+  }
+
+  if (inflightIssuesRequest) {
+    return inflightIssuesRequest;
+  }
+
+  inflightIssuesRequest = fetch(ISSUES_URL, { cache: "default" })
+    .then((res) => {
+      if (!res.ok) {
+        throw new Error(`Failed to fetch issues (${res.status})`);
+      }
+      return res.json();
+    })
+    .then((json) => {
+      cachedIssues = json;
+      cacheExpiresAt = Date.now() + CACHE_TTL_MS;
+      return json;
+    })
+    .finally(() => {
+      inflightIssuesRequest = null;
+    });
+
+  return inflightIssuesRequest;
+}
 
 export default function HeatMapCard() {
   const [data, setData] = useState(null);
@@ -13,15 +49,12 @@ export default function HeatMapCard() {
   useEffect(() => {
     let cancelled = false;
 
-    fetch("http://localhost:8000/issues")
-      .then((res) => {
-        if (!res.ok) {
-          throw new Error(`Failed to fetch issues (${res.status})`);
-        }
-        return res.json();
-      })
+    getIssuesWithCache()
       .then((json) => {
-        if (!cancelled) setData(json);
+        if (!cancelled) {
+          setData(json);
+          setError("");
+        }
       })
       .catch((err) => {
         console.error(err);
