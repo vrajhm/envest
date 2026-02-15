@@ -5,6 +5,21 @@ import { useRouter } from "next/navigation";
 import { Smooch_Sans, Montserrat } from "next/font/google";
 import { Saira_Extra_Condensed } from "next/font/google";
 import { useEffect, useState } from "react";
+import {
+  dashboardSeed,
+  dashboardStartups,
+  type DashboardStartupRow,
+} from "@/lib/dashboardData";
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 const montserrat = Montserrat({
   subsets: ["latin"],
@@ -18,50 +33,95 @@ const sairaExtraCondensed = Saira_Extra_Condensed({
 
 export default function Dashboard() {
   const [fadeIn, setFadeIn] = useState(false);
+  const [startups, setStartups] = useState<DashboardStartupRow[]>(dashboardStartups);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [startupNameInput, setStartupNameInput] = useState("");
+  const [startupSectorInput, setStartupSectorInput] = useState("");
+  const [startupLocationInput, setStartupLocationInput] = useState("");
+  const [isAddingStartup, setIsAddingStartup] = useState(false);
+  const [addStartupError, setAddStartupError] = useState<string | null>(null);
   const router = useRouter();
 
   useEffect(() => {
     setFadeIn(true);
   }, []);
 
-  const startups = [
-    {
-      name: "EcoGen",
-      sector: "Energy",
-      climateTrust: 92,
-      greenwashRisk: 12,
-      netZeroCred: 100,
-      confidence: 87,
-      status: "Strong",
-    },
-    {
-      name: "GreenLeaf",
-      sector: "Agriculture",
-      climateTrust: 78,
-      greenwashRisk: 34,
-      netZeroCred: 65,
-      confidence: 54,
-      status: "Neutral",
-    },
-    {
-      name: "UrbanRoots",
-      sector: "Urban Farming",
-      climateTrust: 88,
-      greenwashRisk: 27,
-      netZeroCred: 90,
-      confidence: 73,
-      status: "Strong",
-    },
-    {
-      name: "BlueCycle",
-      sector: "Recycling",
-      climateTrust: 61,
-      greenwashRisk: 49,
-      netZeroCred: 72,
-      confidence: 58,
-      status: "Poor",
-    },
-  ];
+  const portfolioMetrics = dashboardSeed.portfolio_metrics;
+  const canAddStartup =
+    startupNameInput.trim().length > 0 &&
+    startupSectorInput.trim().length > 0 &&
+    startupLocationInput.trim().length > 0;
+
+  const resetStartupDialog = () => {
+    setStartupNameInput("");
+    setStartupSectorInput("");
+    setStartupLocationInput("");
+    setAddStartupError(null);
+  };
+
+  const handleAddStartup = async () => {
+    if (!canAddStartup || isAddingStartup) return;
+
+    setIsAddingStartup(true);
+    setAddStartupError(null);
+
+    try {
+      const response = await fetch("/api/dashboard/startups", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: startupNameInput.trim(),
+          sector: startupSectorInput.trim(),
+          location: startupLocationInput.trim(),
+        }),
+      });
+
+      const payload = (await response.json()) as {
+        error?: string;
+        startup?: {
+          startup_id: string;
+          name: string;
+          sector: string;
+          climate_trust: number;
+          greenwash_risk: number;
+          net_zero_cred: number;
+          confidence: number;
+          status: string;
+        };
+      };
+
+      if (!response.ok || !payload.startup) {
+        setAddStartupError(payload.error ?? "Failed to add startup.");
+        return;
+      }
+
+      const startup = payload.startup;
+      setStartups((current) => [
+        ...current,
+        {
+          startupId: startup.startup_id,
+          name: startup.name,
+          sector: startup.sector,
+          climateTrust: startup.climate_trust,
+          greenwashRisk: startup.greenwash_risk,
+          netZeroCred: startup.net_zero_cred,
+          confidence: startup.confidence,
+          status: startup.status,
+        },
+      ]);
+
+      const startupPath = `/${encodeURIComponent(startup.name.toLowerCase())}`;
+      resetStartupDialog();
+      setDialogOpen(false);
+      router.push(startupPath);
+    } catch {
+      setAddStartupError("Failed to add startup.");
+    } finally {
+      setIsAddingStartup(false);
+    }
+  };
 
   const handleRowClick = (startupName: string) => {
     router.push(`/${startupName.toLowerCase()}`);
@@ -72,7 +132,9 @@ export default function Dashboard() {
       style={{
         minHeight: "100vh",
         width: "100%",
-        background: "rgb(217, 205, 183)",
+        background: fadeIn
+          ? "linear-gradient(135deg, rgb(56, 58, 45) 60%, rgb(36, 44, 32) 100%)"
+          : "rgb(56, 58, 45)",
         position: "relative",
         transition: "background 0.8s cubic-bezier(.4,1.3,.6,1)",
       }}
@@ -80,8 +142,7 @@ export default function Dashboard() {
       <div
         className={`${montserrat.className} min-h-screen w-full relative px-6 pt-32 pb-10`}
         style={{
-          background:
-            "linear-gradient(135deg, rgb(56, 58, 45) 60%, rgb(36, 44, 32) 100%)",
+          background: "transparent",
           opacity: fadeIn ? 1 : 0,
           transition: "opacity 0.8s cubic-bezier(.4,1.3,.6,1)",
         }}
@@ -136,24 +197,81 @@ export default function Dashboard() {
             your portfolio
           </div>
           <div className="mb-6 flex justify-end">
-            <Link
-              href="/add-startup"
-              className={`${montserrat.className} text-lg font-semibold`}
-              style={{
-                color: "rgb(237, 243, 189)",
-                letterSpacing: "0.04em",
-                textDecoration: "none",
-                transition: "transform 0.18s cubic-bezier(.4,1.3,.6,1)",
+            <AlertDialog
+              open={dialogOpen}
+              onOpenChange={(open) => {
+                setDialogOpen(open);
+                if (!open) resetStartupDialog();
               }}
-              onMouseEnter={(e) =>
-                (e.currentTarget.style.transform = "scale(1.09)")
-              }
-              onMouseLeave={(e) =>
-                (e.currentTarget.style.transform = "scale(1)")
-              }
             >
-              add startup →
-            </Link>
+              <AlertDialogTrigger asChild>
+                <button
+                  type="button"
+                  className={`${montserrat.className} text-lg font-semibold`}
+                  style={{
+                    color: "rgb(237, 243, 189)",
+                    letterSpacing: "0.04em",
+                    textDecoration: "none",
+                    transition: "transform 0.18s cubic-bezier(.4,1.3,.6,1)",
+                  }}
+                  onMouseEnter={(e) =>
+                    (e.currentTarget.style.transform = "scale(1.09)")
+                  }
+                  onMouseLeave={(e) =>
+                    (e.currentTarget.style.transform = "scale(1)")
+                  }
+                >
+                  add startup →
+                </button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Add startup?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Enter startup details to add it to your portfolio.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <div className="grid gap-3">
+                  <input
+                    type="text"
+                    value={startupNameInput}
+                    onChange={(e) => setStartupNameInput(e.target.value)}
+                    placeholder="Name"
+                    className={`${montserrat.className} h-10 border border-[rgb(85,81,46)] bg-[rgb(237,243,189)] px-3 text-[rgb(26,28,18)] outline-none`}
+                  />
+                  <input
+                    type="text"
+                    value={startupSectorInput}
+                    onChange={(e) => setStartupSectorInput(e.target.value)}
+                    placeholder="Sector"
+                    className={`${montserrat.className} h-10 border border-[rgb(85,81,46)] bg-[rgb(237,243,189)] px-3 text-[rgb(26,28,18)] outline-none`}
+                  />
+                  <input
+                    type="text"
+                    value={startupLocationInput}
+                    onChange={(e) => setStartupLocationInput(e.target.value)}
+                    placeholder="Location"
+                    className={`${montserrat.className} h-10 border border-[rgb(85,81,46)] bg-[rgb(237,243,189)] px-3 text-[rgb(26,28,18)] outline-none`}
+                  />
+                  {addStartupError && (
+                    <div className={`${montserrat.className} text-sm text-red-800`}>
+                      {addStartupError}
+                    </div>
+                  )}
+                </div>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <button
+                    type="button"
+                    onClick={handleAddStartup}
+                    disabled={!canAddStartup || isAddingStartup}
+                    className={`${montserrat.className} inline-flex h-10 items-center justify-center border border-[rgb(26,28,18)] px-4 text-sm font-medium uppercase tracking-wide text-[rgb(26,28,18)] transition hover:bg-[rgb(26,28,18)] hover:text-[rgb(237,243,189)] disabled:cursor-not-allowed disabled:opacity-60`}
+                  >
+                    {isAddingStartup ? "Adding..." : "Add startup"}
+                  </button>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </div>
           {/* 2x2 Cards Grid */}
           <div className="flex flex-row gap-6 mb-10 mt-9">
@@ -166,7 +284,7 @@ export default function Dashboard() {
                 className="font-bold tracking-tight text-3xl"
                 style={{ lineHeight: "0.9" }}
               >
-                <span>AVERAGE CLIMATE SCORE</span>
+                <span>AVERAGE CLIMATE SCORE </span>
               </div>
               <div
                 className="text-lg font-normal mt-1 tracking-tight"
@@ -174,6 +292,7 @@ export default function Dashboard() {
               >
                 OVERALL SUSTAINABILITY TRUST RATING OF YOUR PORTFOLIO
               </div>
+              <div>{portfolioMetrics.average_climate_score}</div>
             </div>
 
             {/* Card 2 */}
@@ -193,6 +312,7 @@ export default function Dashboard() {
               >
                 HOLDINGS FLAGGED AS HIGH-RISK FOR GREENWASHING
               </div>
+              <div>{portfolioMetrics.high_risk_startups}</div>
             </div>
 
             {/* Card 3 */}
@@ -212,6 +332,7 @@ export default function Dashboard() {
               >
                 COMBINED GREENWASHING PROBABILITY ACROSS YOUR PORTFOLIO
               </div>
+              <div>{portfolioMetrics.aggregate_greenwashing_risk}</div>
             </div>
 
             {/* Card 4 */}
@@ -231,6 +352,7 @@ export default function Dashboard() {
               >
                 RISK-ADJUSTED RETURNS FACTORING CLIMATE AUTHENTICITY
               </div>
+              <div>{portfolioMetrics.climate_adjusted_return_index}</div>
             </div>
           </div>
 
