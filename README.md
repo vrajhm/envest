@@ -1,5 +1,12 @@
 # envest
 
+AI agents for VCs built on historical trends of frauds and pretend policies. Stop letting the paperwork fool you. Let the agents go to work.Voice Agent support added as well.
+
+- **ParsingAgent** — parses each startup's ESG report and scores every clause against your specific climate concerns (carbon reduction, Scope 3 transparency, offset quality, supply-chain accountability), flagging vague, non-committal, or greenwashing language.
+- **ResolvingAgent** — the "vulnerability resolver": explains why a clause is weak and drafts the firm, timeline-bound replacement language you'd demand before signing.
+- **MappingAgent** — pulls live air-quality data from OpenAQ and renders it as a portfolio heatmap so environmental exposure is visible at a glance.
+- **KnowledgeAgent** — serves startup claim context and pitch-deck data for live diligence calls with founders.
+
 https://github.com/user-attachments/assets/b07f1f63-a083-4f16-9d8c-81371b541ac8
 
 ## landing page
